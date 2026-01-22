@@ -124,10 +124,13 @@ export async function POST(request: Request) {
             }
         }
 
-        // Fetch user by name
-        const result = await query('SELECT * FROM users WHERE name = $1', [username]);
+        // Fetch user by name or email
+        const result = await query(
+            'SELECT * FROM users WHERE name = $1 OR email = $1',
+            [username]
+        );
 
-        if (result.rowCount === 0) {
+        if (result && (result.rowCount ?? 0) === 0) {
             return NextResponse.json({ error: 'Invalid credentials' }, { status: 401 });
         }
 

@@ -3,10 +3,9 @@
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
-import { DollarSign, TrendingUp, AlertTriangle, Layers, Calendar, FileText, Settings, UserPlus, Filter } from 'lucide-react';
+import { DollarSign, TrendingUp, AlertTriangle, Layers, Calendar, FileText, Settings, UserPlus, Filter, Plus } from 'lucide-react';
 
 import { LiveClock } from '@/components/dashboard/LiveClock';
-
 import { AdminWelcomeScreen } from '@/components/dashboard/AdminWelcomeScreen';
 
 interface DashboardData {
@@ -25,7 +24,6 @@ export function AdminDashboard() {
     const [chartPeriod, setChartPeriod] = useState<'WEEK' | 'MONTH'>('WEEK');
 
     useEffect(() => {
-        // Show welcome only once per session
         const hasSeenWelcome = sessionStorage.getItem('hasSeenAdminWelcome');
         if (!hasSeenWelcome) {
             setShowWelcome(true);
@@ -44,7 +42,6 @@ export function AdminDashboard() {
                 const json = await res.json();
                 setData(json);
             } else {
-                // Fallback
                 setData({ revenue: 0, todayRevenue: 0, pendingBalance: 0, activeRepairs: 0, repairsThisMonth: 0, chartData: [] });
             }
         } catch {
@@ -56,7 +53,7 @@ export function AdminDashboard() {
 
     useEffect(() => {
         fetchStats();
-        const interval = setInterval(fetchStats, 30000); // Live refresh
+        const interval = setInterval(fetchStats, 30000);
         return () => clearInterval(interval);
     }, [chartPeriod]);
 
@@ -74,10 +71,6 @@ export function AdminDashboard() {
 
     const formatCurrency = (amount: number) => `Rs. ${amount.toLocaleString('en-IN')}`;
 
-
-
-    // ...
-
     return (
         <div className="space-y-6">
             <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-6">
@@ -86,10 +79,9 @@ export function AdminDashboard() {
 
             <LiveClock />
 
-            {/* Bento Grid Layout */}
             <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
 
-                {/* Large Tile: Today's Revenue */}
+                {/* Today's Revenue */}
                 <div className="col-span-1 md:col-span-2 bg-gradient-to-br from-blue-900/50 to-black border border-blue-900/30 rounded-3xl p-8 relative overflow-hidden group">
                     <div className="absolute top-0 right-0 p-8 opacity-10 group-hover:opacity-20 transition-opacity">
                         <DollarSign className="w-32 h-32 text-blue-400" />
@@ -104,7 +96,7 @@ export function AdminDashboard() {
                     </div>
                 </div>
 
-                {/* Medium Tile: Pending Balance */}
+                {/* Pending Balance */}
                 <div className="col-span-1 md:col-span-1 bg-gray-900/50 border border-gray-800 rounded-3xl p-6 flex flex-col justify-between hover:border-red-500/30 transition-colors">
                     <div className="flex justify-between items-start">
                         <div className="p-3 bg-red-500/10 rounded-xl">
@@ -118,7 +110,7 @@ export function AdminDashboard() {
                     </div>
                 </div>
 
-                {/* Medium Tile: Active Repairs */}
+                {/* Active Repairs */}
                 <div className="col-span-1 md:col-span-1 bg-gray-900/50 border border-gray-800 rounded-3xl p-6 flex flex-col justify-between hover:border-blue-500/30 transition-colors">
                     <div className="flex justify-between items-start">
                         <div className="p-3 bg-blue-500/10 rounded-xl">
@@ -132,7 +124,7 @@ export function AdminDashboard() {
                     </div>
                 </div>
 
-                {/* Large Chart Area */}
+                {/* Chart Area */}
                 <div className="col-span-1 md:col-span-3 bg-gray-900/50 border border-gray-800 rounded-3xl p-6 min-h-[400px]">
                     <div className="flex justify-between items-center mb-6">
                         <h3 className="text-lg font-semibold text-gray-200">Revenue Analysis</h3>
@@ -163,26 +155,28 @@ export function AdminDashboard() {
                                 cursor={{ fill: '#ffffff10' }}
                                 formatter={(value: number) => [`Rs. ${value.toLocaleString('en-IN')}`, 'Revenue']}
                             />
-                            <Bar
-                                dataKey="revenue"
-                                fill="#3b82f6"
-                                radius={[4, 4, 4, 4]}
-                                barSize={40}
-                            />
+                            <Bar dataKey="revenue" fill="#3b82f6" radius={[4, 4, 4, 4]} barSize={40} />
                         </BarChart>
                     </ResponsiveContainer>
                 </div>
 
-                {/* Right Sidebar / Quick Actions */}
+                {/* Quick Actions & Monthly Stats */}
                 <div className="col-span-1 md:col-span-1 flex flex-col gap-4">
                     <div className="bg-gray-900 border border-gray-800 rounded-3xl p-6 flex-1">
                         <h3 className="text-lg font-semibold text-gray-200 mb-4">Quick Actions</h3>
                         <div className="space-y-3">
                             <Link href="/repairs/new" className="flex items-center gap-3 p-3 bg-white/5 hover:bg-white/10 rounded-xl transition-colors group">
                                 <div className="p-2 bg-blue-500/20 rounded-lg text-blue-400 group-hover:scale-110 transition-transform">
-                                    <UserPlus className="w-5 h-5" />
+                                    <Plus className="w-5 h-5" />
                                 </div>
                                 <span className="text-gray-300 font-medium text-sm">New Repair</span>
+                            </Link>
+
+                            <Link href="/dashboard/users" className="flex items-center gap-3 p-3 bg-white/5 hover:bg-white/10 rounded-xl transition-colors group">
+                                <div className="p-2 bg-purple-500/20 rounded-lg text-purple-400 group-hover:scale-110 transition-transform">
+                                    <UserPlus className="w-5 h-5" />
+                                </div>
+                                <span className="text-gray-300 font-medium text-sm">Manage Staff</span>
                             </Link>
 
                             <Link href="/invoices" className="flex items-center gap-3 p-3 bg-white/5 hover:bg-white/10 rounded-xl transition-colors group">
@@ -193,7 +187,7 @@ export function AdminDashboard() {
                             </Link>
 
                             <Link href="/repairs" className="flex items-center gap-3 p-3 bg-white/5 hover:bg-white/10 rounded-xl transition-colors group">
-                                <div className="p-2 bg-purple-500/20 rounded-lg text-purple-400 group-hover:scale-110 transition-transform">
+                                <div className="p-2 bg-orange-500/20 rounded-lg text-orange-400 group-hover:scale-110 transition-transform">
                                     <Settings className="w-5 h-5" />
                                 </div>
                                 <span className="text-gray-300 font-medium text-sm">Manage All</span>
