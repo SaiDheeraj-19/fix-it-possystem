@@ -11,7 +11,7 @@
 ## ✨ Features
 
 ### 🛡️ Premium Security & Authentication
-- **Multi-Role Access**: Dedicated dashboards for **Admin (Dinesh)** and Staff.
+- **Multi-Role Access**: Dedicated dashboards for Admin and Staff.
 - **Android-Style Lock Capture**: Capture device security patterns, PINs, or passwords with a high-fidelity visual interface.
 - **Encrypted Storage**: Sensitive device security data is encrypted before being stored in the database.
 
@@ -76,11 +76,8 @@
 
 ---
 
-## 👤 Admin Access
-- **Username**: `dinesh`
-- **Password**: `dineshceo@fixit-3`
-
 ---
+
 
 ## 📍 Contact & Support
 **FIX IT - A Perfect Mobile Service**
