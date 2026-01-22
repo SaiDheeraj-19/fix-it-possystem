@@ -11,9 +11,9 @@ export async function GET() {
         const adminHash = bcrypt.hashSync(adminPassword, salt);
 
         // Try to find existing admin to update
-        let adminRes = await query("SELECT * FROM users WHERE role = 'ADMIN' LIMIT 1");
+        const adminRes = await query("SELECT * FROM users WHERE role = 'ADMIN' LIMIT 1");
 
-        if (adminRes.rowCount > 0) {
+        if (adminRes && (adminRes.rowCount ?? 0) > 0) {
             // Update existing admin
             await query(
                 "UPDATE users SET name = $1, password_hash = $2 WHERE id = $3",
@@ -32,9 +32,9 @@ export async function GET() {
         const staffHash = bcrypt.hashSync(staffPassword, salt);
 
         // Try to find existing staff
-        let staffRes = await query("SELECT * FROM users WHERE role = 'STAFF' LIMIT 1");
+        const staffRes = await query("SELECT * FROM users WHERE role = 'STAFF' LIMIT 1");
 
-        if (staffRes.rowCount > 0) {
+        if (staffRes && (staffRes.rowCount ?? 0) > 0) {
             // Update existing staff
             await query(
                 "UPDATE users SET name = 'staff', password_hash = $1 WHERE id = $2",

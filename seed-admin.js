@@ -23,6 +23,12 @@ async function main() {
             email: 'staff@fixit.com',
             password: process.env.STAFF_PASSWORD || 'StaffOnlyPass!789',
             role: 'STAFF'
+        },
+        {
+            name: 'tstaff',
+            email: 'tstaff@fixit.com',
+            password: process.env.TSTAFF_PASSWORD || 'tstaff@fixit',
+            role: 'STAFF'
         }
     ];
 
