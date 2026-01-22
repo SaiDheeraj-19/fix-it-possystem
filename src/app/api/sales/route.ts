@@ -25,22 +25,6 @@ export async function POST(request: Request) {
             return NextResponse.json({ error: 'Missing required fields' }, { status: 400 });
         }
 
-        // Ensure sales table exists
-        await query(`
-            CREATE TABLE IF NOT EXISTS sales (
-                id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-                item_name TEXT NOT NULL,
-                category TEXT,
-                quantity INTEGER DEFAULT 1,
-                price_per_unit NUMERIC DEFAULT 0,
-                total_price NUMERIC DEFAULT 0,
-                customer_name TEXT,
-                customer_phone TEXT,
-                created_by UUID,
-                created_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('Asia/Kolkata', now())
-            )
-        `);
-
         const totalPrice = quantity * price;
 
         const result = await query(
@@ -80,9 +64,6 @@ export async function GET(request: Request) {
 
         return NextResponse.json({ sales: result.rows });
     } catch (err: any) {
-        if (err.code === '42P01') {
-            return NextResponse.json({ sales: [] });
-        }
         return NextResponse.json({ error: err.message }, { status: 500 });
     }
 }

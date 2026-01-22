@@ -18,41 +18,6 @@ export async function POST(request: Request) {
             security, images
         } = body;
 
-        // Ensure repairs table exists with all columns
-        await query(`
-      CREATE TABLE IF NOT EXISTS repairs (
-        id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-        customer_name TEXT NOT NULL,
-        customer_phone TEXT NOT NULL,
-        device_brand TEXT NOT NULL,
-        device_model TEXT NOT NULL,
-        problem TEXT NOT NULL,
-        imei TEXT,
-        estimated_cost NUMERIC NOT NULL DEFAULT 0,
-        advance NUMERIC NOT NULL DEFAULT 0,
-        warranty TEXT,
-        status TEXT DEFAULT 'NEW',
-        pin_encrypted TEXT,
-        pin_iv TEXT,
-        pattern_encrypted TEXT,
-        pattern_iv TEXT,
-        password_encrypted TEXT,
-        password_iv TEXT,
-        images JSONB,
-        created_by UUID,
-        created_at TIMESTAMP DEFAULT NOW(),
-        balance_collected_at TIMESTAMP
-      )
-    `);
-
-        // Add columns if they don't exist (migrations)
-        try {
-            await query('ALTER TABLE repairs ADD COLUMN IF NOT EXISTS warranty TEXT');
-            await query('ALTER TABLE repairs ALTER COLUMN images TYPE JSONB USING images::JSONB');
-        } catch (e) {
-            // Ignore
-        }
-
         // Encrypt Security Data if provided
         let pinEncrypted = null, pinIv = null;
         let patternEncrypted = null, patternIv = null;
@@ -106,23 +71,6 @@ export async function POST(request: Request) {
 
 export async function GET() {
     try {
-        // Ensure table exists
-        await query(`
-      CREATE TABLE IF NOT EXISTS repairs (
-        id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-        customer_name TEXT NOT NULL,
-        customer_phone TEXT NOT NULL,
-        device_brand TEXT NOT NULL,
-        device_model TEXT NOT NULL,
-        problem TEXT NOT NULL,
-        imei TEXT,
-        estimated_cost NUMERIC NOT NULL DEFAULT 0,
-        advance NUMERIC NOT NULL DEFAULT 0,
-        status TEXT DEFAULT 'NEW',
-        created_at TIMESTAMP DEFAULT NOW()
-      )
-    `);
-
         const result = await query('SELECT * FROM repairs ORDER BY created_at DESC LIMIT 50');
         return NextResponse.json({ repairs: result.rows });
     } catch (e: any) {

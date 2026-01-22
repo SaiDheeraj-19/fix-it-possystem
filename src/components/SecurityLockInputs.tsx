@@ -31,6 +31,7 @@ export const SecurityLockInputs: React.FC<SecurityLockInputsProps> = ({
     );
 
     const svgRef = useRef<SVGSVGElement>(null);
+    const containerRef = useRef<HTMLDivElement>(null);
     const [isDrawing, setIsDrawing] = useState(false);
 
     useEffect(() => {
@@ -66,10 +67,27 @@ export const SecurityLockInputs: React.FC<SecurityLockInputsProps> = ({
         setPatternPath([index]);
     };
 
-    const handlePointerEnter = (index: number) => {
-        if (readOnly) return;
-        if (isDrawing && !patternPath.includes(index)) {
-            setPatternPath((prev) => [...prev, index]);
+    const handlePointerMove = (e: React.PointerEvent) => {
+        if (readOnly || !isDrawing || !containerRef.current) return;
+
+        const rect = containerRef.current.getBoundingClientRect();
+        const x = e.clientX - rect.left;
+        const y = e.clientY - rect.top;
+
+        // Find which dot is near (80x80 grid)
+        const col = Math.floor(x / 80);
+        const row = Math.floor(y / 80);
+
+        if (col >= 0 && col < 3 && row >= 0 && row < 3) {
+            const index = row * 3 + col;
+
+            // Check if pointer is close enough to the center of the dot (within 30px)
+            const dotCenter = getCoordinates(index);
+            const dist = Math.sqrt(Math.pow(x - dotCenter.x, 2) + Math.pow(y - dotCenter.y, 2));
+
+            if (dist < 30 && !patternPath.includes(index)) {
+                setPatternPath((prev) => [...prev, index]);
+            }
         }
     };
 
@@ -140,7 +158,11 @@ export const SecurityLockInputs: React.FC<SecurityLockInputsProps> = ({
                 readOnly ? "bg-transparent" : "bg-gray-950 rounded-2xl border border-gray-800"
             )}>
                 {mode === "PATTERN" ? (
-                    <div className="relative w-[240px] h-[240px] touch-none select-none">
+                    <div
+                        ref={containerRef}
+                        onPointerMove={handlePointerMove}
+                        className="relative w-[240px] h-[240px] touch-none select-none"
+                    >
                         {/* Background Grid Dots */}
                         <div className="absolute inset-0 grid grid-cols-3 grid-rows-3">
                             {DOTS.map(dot => (
@@ -186,7 +208,6 @@ export const SecurityLockInputs: React.FC<SecurityLockInputsProps> = ({
                                         key={dot}
                                         className="flex items-center justify-center cursor-pointer"
                                         onPointerDown={() => handlePointerDown(dot)}
-                                        onPointerEnter={() => handlePointerEnter(dot)}
                                     >
                                         <div className={cn(
                                             "transition-all duration-300 rounded-full border-2",

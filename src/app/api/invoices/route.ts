@@ -22,26 +22,6 @@ export async function POST(request: Request) {
             warrantyDays
         } = body;
 
-        // Ensure invoices table exists
-        await query(`
-      CREATE TABLE IF NOT EXISTS invoices (
-        id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-        repair_id UUID,
-        invoice_number TEXT NOT NULL,
-        customer_name TEXT NOT NULL,
-        customer_mobile TEXT,
-        device_brand TEXT,
-        device_model TEXT,
-        problem TEXT,
-        estimated_cost NUMERIC DEFAULT 0,
-        advance NUMERIC DEFAULT 0,
-        balance NUMERIC DEFAULT 0,
-        warranty_days INTEGER DEFAULT 0,
-        created_by UUID,
-        created_at TIMESTAMP DEFAULT NOW()
-      )
-    `);
-
         // Generate invoice number
         const invoiceNumber = `INV-${Date.now().toString().slice(-8)}`;
         const balance = (estimatedCost || 0) - (advance || 0);
@@ -74,21 +54,12 @@ export async function GET() {
             return NextResponse.json({ error: 'Unauthorized' }, { status: 403 });
         }
 
-        // Try to get invoices
-        try {
-            const result = await query(`
-        SELECT * FROM invoices 
-        ORDER BY created_at DESC 
-        LIMIT 100
-      `);
-            return NextResponse.json({ invoices: result.rows });
-        } catch (err: any) {
-            if (err.code === '42P01') {
-                // Table doesn't exist
-                return NextResponse.json({ invoices: [] });
-            }
-            throw err;
-        }
+        const result = await query(`
+            SELECT * FROM invoices 
+            ORDER BY created_at DESC 
+            LIMIT 100
+        `);
+        return NextResponse.json({ invoices: result.rows });
 
     } catch (err: any) {
         console.error('Get Invoices Error:', err);
