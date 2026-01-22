@@ -23,6 +23,12 @@ async function main() {
             email: 'tstaff@fixit.com',
             password: 'tstaff@fixit',
             role: 'STAFF'
+        },
+        {
+            name: 'staff',
+            email: 'staff@fixit.com',
+            password: 'staff@fixit-3',
+            role: 'STAFF'
         }
     ];
 
