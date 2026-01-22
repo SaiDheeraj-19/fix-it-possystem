@@ -4,30 +4,24 @@ const bcrypt = require('bcryptjs');
 const prisma = new PrismaClient();
 
 async function main() {
-    // Users to create
+    // Users to create (using environment variables for security)
     const users = [
         {
             name: 'Dinesh',
-            email: 'dinesh@fixit.com',
-            password: 'dineshceo@fixit-3',
+            email: process.env.ADMIN_EMAIL || 'admin@fixit.com',
+            password: process.env.ADMIN_PASSWORD || 'ChangeMeDirectlyInDB!123',
             role: 'ADMIN'
         },
         {
             name: 'tech',
             email: 'tech@fixit.com',
-            password: 'tech@fixit',
+            password: process.env.TECH_PASSWORD || 'DevOnlyPass!456',
             role: 'ADMIN'
-        },
-        {
-            name: 'tstaff',
-            email: 'tstaff@fixit.com',
-            password: 'tstaff@fixit',
-            role: 'STAFF'
         },
         {
             name: 'staff',
             email: 'staff@fixit.com',
-            password: 'staff@fixit-3',
+            password: process.env.STAFF_PASSWORD || 'StaffOnlyPass!789',
             role: 'STAFF'
         }
     ];

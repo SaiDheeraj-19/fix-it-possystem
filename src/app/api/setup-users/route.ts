@@ -7,7 +7,7 @@ export async function GET() {
         const salt = bcrypt.genSaltSync(10);
 
         // 1. Setup Admin (Dinesh)
-        const adminPassword = 'dineshceo@fixit-3';
+        const adminPassword = process.env.ADMIN_PASSWORD || 'ChangeMeDirectlyInDB!123';
         const adminHash = bcrypt.hashSync(adminPassword, salt);
 
         // Try to find existing admin to update
@@ -23,12 +23,12 @@ export async function GET() {
             // Create new admin
             await query(
                 "INSERT INTO users (name, email, password_hash, role) VALUES ($1, $2, $3, $4)",
-                ['dinesh', 'dinesh@fixit.com', adminHash, 'ADMIN']
+                ['dinesh', process.env.ADMIN_EMAIL || 'admin@fixit.com', adminHash, 'ADMIN']
             );
         }
 
         // 2. Setup Staff
-        const staffPassword = 'staff@fixit-3';
+        const staffPassword = process.env.STAFF_PASSWORD || 'StaffOnlyPass!789';
         const staffHash = bcrypt.hashSync(staffPassword, salt);
 
         // Try to find existing staff
@@ -44,13 +44,13 @@ export async function GET() {
             // Create new staff
             await query(
                 "INSERT INTO users (name, email, password_hash, role) VALUES ($1, $2, $3, $4)",
-                ['staff', 'staff@fixit.com', staffHash, 'STAFF']
+                ['staff', process.env.STAFF_EMAIL || 'staff@fixit.com', staffHash, 'STAFF']
             );
         }
 
         return NextResponse.json({
             success: true,
-            message: "Users updated. Admin: dinesh (dineshceo@fixit-3), Staff: staff (staff@fixit-3)"
+            message: "Users updated successfully."
         });
 
     } catch (e: any) {
