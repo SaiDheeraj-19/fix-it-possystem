@@ -8,14 +8,14 @@ import { motion } from 'framer-motion';
 import { LiveClock } from '@/components/dashboard/LiveClock';
 
 export function StaffDashboard() {
-    const [pendingCount, setPendingCount] = useState(0);
+    const [activeCount, setActiveCount] = useState(0);
 
     useEffect(() => {
-        // Fetch real pending count
+        // Fetch real active count (everything not delivered/cancelled)
         fetch('/api/repairs/count')
             .then(res => res.json())
-            .then(data => setPendingCount(data.pending || 0))
-            .catch(() => setPendingCount(0));
+            .then(data => setActiveCount(data.active || 0))
+            .catch(() => setActiveCount(0));
     }, []);
 
     const container = {
@@ -77,9 +77,9 @@ export function StaffDashboard() {
                             <Search className="w-12 h-12 text-white/10 absolute -right-2 -bottom-2" />
                             <div className="flex justify-between items-start">
                                 <Truck className="w-8 h-8 text-yellow-500 mb-4" />
-                                {pendingCount > 0 && (
-                                    <span className="bg-yellow-500/20 text-yellow-500 text-xs px-2 py-1 rounded-full">
-                                        {pendingCount} Pending
+                                {activeCount > 0 && (
+                                    <span className="bg-blue-500/20 text-blue-400 text-xs px-2 py-1 rounded-full">
+                                        {activeCount} Active
                                     </span>
                                 )}
                             </div>
