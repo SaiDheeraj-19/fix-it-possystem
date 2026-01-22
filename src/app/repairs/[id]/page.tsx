@@ -77,7 +77,7 @@ export default async function RepairDetailPage({ params }: { params: { id: strin
         }
     }
 
-    const balance = (repair.estimated_cost || 0) - (repair.advance || 0);
+    const balance = !!repair.balance_collected_at ? 0 : (repair.estimated_cost || 0) - (repair.advance || 0);
 
     const getStatusColor = (status: string) => {
         switch (status) {
@@ -156,8 +156,8 @@ export default async function RepairDetailPage({ params }: { params: { id: strin
                                 <span className="text-green-400 font-medium">- Rs. {(repair.advance || 0).toLocaleString('en-IN')}</span>
                             </div>
                             <div className="border-t border-gray-700 pt-3 flex justify-between items-center">
-                                <span className="text-white font-semibold">Balance Due</span>
-                                <span className="text-red-400 font-bold text-2xl">Rs. {balance.toLocaleString('en-IN')}</span>
+                                <span className="text-white font-semibold">{!!repair.balance_collected_at ? 'Balance Paid' : 'Balance Due'}</span>
+                                <span className={`${!!repair.balance_collected_at ? 'text-green-400' : 'text-red-400'} font-bold text-2xl`}>Rs. {balance.toLocaleString('en-IN')}</span>
                             </div>
                         </div>
                     </div>

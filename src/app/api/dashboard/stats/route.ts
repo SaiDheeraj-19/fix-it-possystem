@@ -24,17 +24,10 @@ export async function GET(request: Request) {
             // Usually revenue is recognized when status is DELIVERED. 
             // If user wants ALL repairs revenue even if not delivered, we remove the WHERE clause, 
             // but usually 'revenue' implies realized money. "Pending Balance" covers the rest.
-            const revenueResult = await query(
-                "SELECT COALESCE(SUM(estimated_cost), 0) as total FROM repairs WHERE status = 'DELIVERED'"
-            );
-            revenue = parseFloat(revenueResult.rows[0].total) || 0;
-
-            // Ensure column exists for queries
-            try {
-                await query('ALTER TABLE repairs ADD COLUMN IF NOT EXISTS balance_collected_at TIMESTAMP');
-            } catch (e) {
-                // Ignore
-            }
+            // Total realized revenue (All advances + All collected balances)
+            const realizedAdvances = await query("SELECT COALESCE(SUM(advance), 0) as total FROM repairs");
+            const realizedBalances = await query("SELECT COALESCE(SUM(estimated_cost - advance), 0) as total FROM repairs WHERE balance_collected_at IS NOT NULL");
+            revenue = (parseFloat(realizedAdvances.rows[0].total) || 0) + (parseFloat(realizedBalances.rows[0].total) || 0);
 
             // Today's Realized Revenue:
             // 1. Advance payments made today (based on created_at)
@@ -48,9 +41,9 @@ export async function GET(request: Request) {
 
             todayRevenue = (parseFloat(todayAdvanceResult.rows[0].total) || 0) + (parseFloat(todayBalanceResult.rows[0].total) || 0);
 
-            // Pending balances
+            // Pending balances: Sum of (cost - advance) for all active repairs where balance hasn't been collected yet
             const pendingResult = await query(
-                "SELECT COALESCE(SUM(estimated_cost - advance), 0) as total FROM repairs WHERE status NOT IN ('DELIVERED', 'CANCELLED')"
+                "SELECT COALESCE(SUM(estimated_cost - advance), 0) as total FROM repairs WHERE status NOT IN ('DELIVERED', 'CANCELLED') AND balance_collected_at IS NULL"
             );
             pendingBalance = parseFloat(pendingResult.rows[0].total) || 0;
 
@@ -66,37 +59,39 @@ export async function GET(request: Request) {
             );
             repairsThisMonth = parseInt(monthResult.rows[0].count) || 0;
 
-            // Chart Data based on period
-            if (period === 'MONTH') {
-                const chartResult = await query(`
-          SELECT 
-            to_char(created_at, 'DD Mon') as name,
-            COALESCE(SUM(estimated_cost), 0) as revenue
-          FROM repairs 
-          WHERE created_at >= CURRENT_DATE - INTERVAL '30 days'
-          GROUP BY to_char(created_at, 'DD Mon'), date_trunc('day', created_at)
-          ORDER BY date_trunc('day', created_at)
-        `);
-                chartData = chartResult.rows.map((r: any) => ({
-                    name: r.name,
-                    revenue: parseFloat(r.revenue) || 0
-                }));
-            } else {
-                // Default WEEK
-                const chartResult = await query(`
-          SELECT 
-            to_char(created_at, 'Dy') as name,
-            COALESCE(SUM(estimated_cost), 0) as revenue
-          FROM repairs 
-          WHERE created_at >= CURRENT_DATE - INTERVAL '7 days'
-          GROUP BY to_char(created_at, 'Dy'), date_trunc('day', created_at)
-          ORDER BY date_trunc('day', created_at)
-        `);
-                chartData = chartResult.rows.map((r: any) => ({
-                    name: r.name,
-                    revenue: parseFloat(r.revenue) || 0
-                }));
-            }
+            // Chart Data: Should show realized cash (Advances + Balanced Collected) for each day
+            const chartInterval = period === 'MONTH' ? '30 days' : '7 days';
+            const chartResult = await query(`
+                WITH DailyStats AS (
+                    -- Daily Advances
+                    SELECT 
+                        DATE(created_at) as date,
+                        SUM(advance) as amount
+                    FROM repairs 
+                    WHERE created_at >= CURRENT_DATE - INTERVAL '${chartInterval}'
+                    GROUP BY DATE(created_at)
+                    
+                    UNION ALL
+                    
+                    -- Daily Collected Balances
+                    SELECT 
+                        DATE(balance_collected_at) as date,
+                        SUM(estimated_cost - advance) as amount
+                    FROM repairs 
+                    WHERE balance_collected_at >= CURRENT_DATE - INTERVAL '${chartInterval}'
+                    GROUP BY DATE(balance_collected_at)
+                )
+                SELECT 
+                    to_char(date, '${period === 'MONTH' ? 'DD Mon' : 'Dy'}') as name,
+                    COALESCE(SUM(amount), 0) as revenue
+                FROM DailyStats
+                GROUP BY date, name
+                ORDER BY date
+            `);
+            chartData = chartResult.rows.map((r: any) => ({
+                name: r.name,
+                revenue: parseFloat(r.revenue) || 0
+            }));
 
         } catch (err: any) {
             console.log('Stats query error:', err.message);
