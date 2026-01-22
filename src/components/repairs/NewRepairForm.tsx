@@ -133,9 +133,8 @@ export function NewRepairForm({ userId }: { userId: string }) {
                 body: JSON.stringify(payload)
             });
 
-            if (!res.ok) throw new Error('Failed to create repair');
-
             const result = await res.json();
+            if (!res.ok) throw new Error(result.error || 'Failed to create repair');
 
             // Save invoice to database (optional, for record)
             await fetch('/api/invoices', {
@@ -156,9 +155,9 @@ export function NewRepairForm({ userId }: { userId: string }) {
 
             setSavedData({ ...data, repairId: result.repairId });
             setShowSuccess(true);
-        } catch (e) {
+        } catch (e: any) {
             console.error(e);
-            alert("Error creating repair order. Please try again.");
+            alert(`Error: ${e.message || "Please try again."}`);
         }
     };
 

@@ -8,8 +8,8 @@ async function main() {
     const users = [
         {
             name: 'Dinesh',
-            email: process.env.ADMIN_EMAIL || 'admin@fixit.com',
-            password: process.env.ADMIN_PASSWORD || 'ChangeMeDirectlyInDB!123',
+            email: process.env.ADMIN_EMAIL || 'dinesh@fixit.com',
+            password: process.env.ADMIN_PASSWORD || 'dineshceo@fixit-3',
             role: 'ADMIN'
         },
         {
@@ -37,14 +37,14 @@ async function main() {
         const user = await prisma.user.upsert({
             where: { email: u.email },
             update: {
-                password: hashedPassword,
+                passwordHash: hashedPassword,
                 role: u.role,
                 name: u.name
             },
             create: {
                 name: u.name,
                 email: u.email,
-                password: hashedPassword,
+                passwordHash: hashedPassword,
                 role: u.role,
             },
         });

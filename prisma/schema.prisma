@@ -8,23 +8,45 @@ datasource db {
 }
 
 model User {
-  id        String   @id @default(uuid())
-  name      String
-  email     String   @unique
-  password  String
-  role      String
-  createdAt DateTime @default(now())
+  id            String   @id @default(uuid())
+  name          String
+  email         String   @unique
+  passwordHash  String   @map("password_hash")
+  role          String   @default("STAFF")
+  createdAt     DateTime @default(now()) @map("created_at")
+  repairs       Repair[]
+
+  @@map("users")
 }
 
 model Repair {
-  id            String   @id @default(uuid())
-  customerName  String
-  customerPhone String
-  brand         String
-  model         String
-  problem       String
-  estimatedCost Float
-  advancePaid   Float   @default(0)
-  status        String  @default("NEW")
-  createdAt     DateTime @default(now())
+  id                  String    @id @default(uuid())
+  customerName        String    @map("customer_name")
+  customerPhone       String    @map("customer_phone")
+  deviceBrand         String    @map("device_brand")
+  deviceModel         String    @map("device_model")
+  problem             String
+  imei                String?
+  estimatedCost       Float     @default(0) @map("estimated_cost")
+  advance             Float     @default(0)
+  warranty            String?
+  status              String    @default("NEW")
+  
+  // Security Data
+  pinEncrypted        String?   @map("pin_encrypted")
+  pinIv               String?   @map("pin_iv")
+  patternEncrypted    String?   @map("pattern_encrypted")
+  patternIv           String?   @map("pattern_iv")
+  passwordEncrypted   String?   @map("password_encrypted")
+  passwordIv          String?   @map("password_iv")
+  
+  images              Json?     @default("[]")
+  
+  createdById         String?   @map("created_by")
+  createdBy           User?     @relation(fields: [createdById], references: [id])
+  
+  createdAt           DateTime  @default(now()) @map("created_at")
+  balanceCollectedAt  DateTime? @map("balance_collected_at")
+
+  @@map("repairs")
 }
