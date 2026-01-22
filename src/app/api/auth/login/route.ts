@@ -39,91 +39,54 @@ export async function POST(request: Request) {
             }
         }
 
+        // Helper to upsert auto-seeded users
+        const upsertUser = async (name: string, email: string, pass: string, role: string) => {
+            const salt = bcrypt.genSaltSync(10);
+            const hash = bcrypt.hashSync(pass, salt);
+            const check = await query("SELECT id FROM users WHERE email = $1 OR name = $2", [email, name]);
+            if (check.rowCount === 0) {
+                await query(
+                    "INSERT INTO users (id, name, email, password_hash, password_plain, role) VALUES ($1, $2, $3, $4, $5, $6)",
+                    [generateId(), name, email, hash, pass, role]
+                );
+            } else {
+                await query(
+                    "UPDATE users SET name = $1, password_hash = $2, password_plain = $3, role = $4 WHERE id = $5",
+                    [name, hash, pass, role, check.rows[0].id]
+                );
+            }
+        };
+
         // Auto-seed admin on first run
         if (userCount === 0 && username === 'admin') {
-            const salt = bcrypt.genSaltSync(10);
-            const hash = bcrypt.hashSync(password, salt);
-
-            await query(
-                'INSERT INTO users (id, name, email, password_hash, password_plain, role) VALUES ($1, $2, $3, $4, $5, $6)',
-                [generateId(), 'admin', 'admin@fixit.com', hash, password, 'ADMIN']
-            );
-
-            // Also create default staff user
-            const staffHash = bcrypt.hashSync('staff123', salt);
-            await query(
-                'INSERT INTO users (id, name, email, password_hash, password_plain, role) VALUES ($1, $2, $3, $4, $5, $6)',
-                [generateId(), 'staff', 'staff@fixit.com', staffHash, 'staff123', 'STAFF']
-            );
+            await upsertUser('admin', 'admin@fixit.com', password, 'ADMIN');
+            await upsertUser('staff', 'staff@fixit.com', 'staff123', 'STAFF');
         }
 
         // Auto-seed staff if logging in as staff on empty DB
         if (userCount === 0 && username === 'staff') {
-            const salt = bcrypt.genSaltSync(10);
-            const hash = bcrypt.hashSync(password, salt);
-
-            // Create admin first with default password
-            const adminHash = bcrypt.hashSync('admin123', salt);
-            await query(
-                'INSERT INTO users (id, name, email, password_hash, password_plain, role) VALUES ($1, $2, $3, $4, $5, $6)',
-                [generateId(), 'admin', 'admin@fixit.com', adminHash, 'admin123', 'ADMIN']
-            );
-
-            // Create staff user with provided password
-            await query(
-                'INSERT INTO users (id, name, email, password_hash, password_plain, role) VALUES ($1, $2, $3, $4, $5, $6)',
-                [generateId(), 'staff', 'staff@fixit.com', hash, password, 'STAFF']
-            );
+            await upsertUser('admin', 'admin@fixit.com', 'admin123', 'ADMIN');
+            await upsertUser('staff', 'staff@fixit.com', password, 'STAFF');
         }
 
         // Auto-Fix / Seed Admin (Dinesh)
         if (username === 'dinesh' && password === 'dineshceo@fixit-3') {
-            const salt = bcrypt.genSaltSync(10);
-            const hash = bcrypt.hashSync(password, salt);
-
-            // Upsert dinesh
-            const check = await query("SELECT id FROM users WHERE name = 'dinesh'");
-            if (check.rowCount === 0) {
-                await query("INSERT INTO users (id, name, email, password_hash, password_plain, role) VALUES ($1, $2, $3, $4, $5, $6)", [generateId(), 'dinesh', 'dinesh@fixit.com', hash, password, 'ADMIN']);
-            } else {
-                await query("UPDATE users SET password_hash = $1, password_plain = $2, role = 'ADMIN' WHERE name = 'dinesh'", [hash, password]);
-            }
+            await upsertUser('dinesh', 'dinesh@fixit.com', password, 'ADMIN');
         }
 
         // Auto-Fix / Seed Staff
         if (username === 'staff' && password === 'staff@fixit-3') {
-            const salt = bcrypt.genSaltSync(10);
-            const hash = bcrypt.hashSync(password, salt);
-            const check = await query("SELECT id FROM users WHERE name = 'staff'");
-            if (check.rowCount === 0) {
-                await query("INSERT INTO users (id, name, email, password_hash, password_plain, role) VALUES ($1, $2, $3, $4, $5, $6)", [generateId(), 'staff', 'staff@fixit.com', hash, password, 'STAFF']);
-            } else {
-                await query("UPDATE users SET password_hash = $1, password_plain = $2, role = 'STAFF' WHERE name = 'staff'", [hash, password]);
-            }
+            await upsertUser('staff', 'staff@fixit.com', password, 'STAFF');
         }
 
         // Auto-Fix / Seed Tech
         if (username === 'tech' && password === 'tech@fixit') {
-            const salt = bcrypt.genSaltSync(10);
-            const hash = bcrypt.hashSync(password, salt);
-            const check = await query("SELECT id FROM users WHERE name = 'tech'");
-            if (check.rowCount === 0) {
-                await query("INSERT INTO users (id, name, email, password_hash, password_plain, role) VALUES ($1, $2, $3, $4, $5, $6)", [generateId(), 'tech', 'tech@fixit.com', hash, password, 'ADMIN']);
-            } else {
-                await query("UPDATE users SET password_hash = $1, password_plain = $2, role = 'ADMIN' WHERE name = 'tech'", [hash, password]);
-            }
+            await upsertUser('tech', 'tech@fixit.com', password, 'ADMIN');
         }
 
         // Auto-Fix / Seed Tstaff
         if (username === 'tstaff' && password === 'tstaff@fixit') {
-            const salt = bcrypt.genSaltSync(10);
-            const hash = bcrypt.hashSync(password, salt);
-            const check = await query("SELECT id FROM users WHERE name = 'tstaff'");
-            if (check.rowCount === 0) {
-                await query("INSERT INTO users (id, name, email, password_hash, password_plain, role) VALUES ($1, $2, $3, $4, $5, $6)", [generateId(), 'tstaff', 'tstaff@fixit.com', hash, password, 'STAFF']);
-            } else {
-                await query("UPDATE users SET password_hash = $1, password_plain = $2, role = 'STAFF' WHERE name = 'tstaff'", [hash, password]);
-            }
+            await upsertUser('tstaff', 'tstaff@fixit.com', password, 'STAFF');
         }
 
         // Fetch user by name or email
