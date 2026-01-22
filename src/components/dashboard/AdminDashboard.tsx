@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
-import { DollarSign, TrendingUp, AlertTriangle, Layers, Calendar, FileText, Settings, UserPlus, Filter, Plus } from 'lucide-react';
+import { DollarSign, TrendingUp, AlertTriangle, Layers, Calendar, FileText, Settings, UserPlus, Filter, Plus, ShoppingCart } from 'lucide-react';
 
 import { LiveClock } from '@/components/dashboard/LiveClock';
 import { AdminWelcomeScreen } from '@/components/dashboard/AdminWelcomeScreen';
@@ -163,13 +163,19 @@ export function AdminDashboard() {
                 {/* Quick Actions & Monthly Stats */}
                 <div className="col-span-1 md:col-span-1 flex flex-col gap-4">
                     <div className="bg-gray-900 border border-gray-800 rounded-3xl p-6 flex-1">
-                        <h3 className="text-lg font-semibold text-gray-200 mb-4">Quick Actions</h3>
                         <div className="space-y-3">
                             <Link href="/repairs/new" className="flex items-center gap-3 p-3 bg-white/5 hover:bg-white/10 rounded-xl transition-colors group">
                                 <div className="p-2 bg-blue-500/20 rounded-lg text-blue-400 group-hover:scale-110 transition-transform">
                                     <Plus className="w-5 h-5" />
                                 </div>
-                                <span className="text-gray-300 font-medium text-sm">New Repair</span>
+                                <span className="text-gray-300 font-medium text-sm">New Repair Order</span>
+                            </Link>
+
+                            <Link href="/dashboard/sales" className="flex items-center gap-3 p-3 bg-white/5 hover:bg-white/10 rounded-xl transition-colors group">
+                                <div className="p-2 bg-green-500/20 rounded-lg text-green-400 group-hover:scale-110 transition-transform">
+                                    <ShoppingCart className="w-5 h-5" />
+                                </div>
+                                <span className="text-gray-300 font-medium text-sm">Quick Store Sale</span>
                             </Link>
 
                             <Link href="/dashboard/users" className="flex items-center gap-3 p-3 bg-white/5 hover:bg-white/10 rounded-xl transition-colors group">
@@ -196,14 +202,13 @@ export function AdminDashboard() {
                     </div>
 
                     <div className="bg-gray-900 border border-gray-800 rounded-3xl p-6">
-                        <h3 className="text-sm font-medium text-gray-400 mb-2">Total Monthly Repairs</h3>
+                        <h3 className="text-sm font-medium text-gray-400 mb-2">Repairs This Month</h3>
                         <p className="text-3xl font-bold text-white">{data.repairsThisMonth}</p>
                         <div className="w-full bg-gray-800 h-1.5 rounded-full mt-4 overflow-hidden">
-                            <div className="bg-purple-500 h-full rounded-full" style={{ width: '70%' }}></div>
+                            <div className="bg-purple-500 h-full rounded-full" style={{ width: '100%' }}></div>
                         </div>
                     </div>
                 </div>
-
             </div>
         </div>
     );

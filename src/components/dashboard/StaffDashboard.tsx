@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
-import { Plus, Search, Truck, FileText, Smartphone } from 'lucide-react';
+import { Plus, Search, Truck, ShoppingCart, Smartphone } from 'lucide-react';
 import { motion } from 'framer-motion';
 
 import { LiveClock } from '@/components/dashboard/LiveClock';
@@ -90,12 +90,12 @@ export function StaffDashboard() {
                 </motion.div>
 
                 <motion.div variants={item}>
-                    <Link href="/invoices/new" className="block group">
+                    <Link href="/dashboard/sales" className="block group">
                         <div className="h-40 bg-gray-600 bg-opacity-30 backdrop-blur-md border border-gray-700 rounded-2xl p-6 relative overflow-hidden hover:border-green-500 transition-colors">
-                            <FileText className="w-12 h-12 text-white/10 absolute -right-2 -bottom-2" />
-                            <FileText className="w-8 h-8 text-green-500 mb-4" />
-                            <h3 className="text-xl font-bold text-white">Quick Invoice</h3>
-                            <p className="text-gray-400 text-sm">Accessories sales & billing</p>
+                            <ShoppingCart className="w-12 h-12 text-white/10 absolute -right-2 -bottom-2" />
+                            <ShoppingCart className="w-8 h-8 text-green-500 mb-4" />
+                            <h3 className="text-xl font-bold text-white">Store Sales</h3>
+                            <p className="text-gray-400 text-sm">Sell accessories & track revenue</p>
                         </div>
                     </Link>
                 </motion.div>

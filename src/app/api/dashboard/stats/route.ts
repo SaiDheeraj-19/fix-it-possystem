@@ -26,22 +26,32 @@ export async function GET(request: Request) {
             // Usually revenue is recognized when status is DELIVERED. 
             // If user wants ALL repairs revenue even if not delivered, we remove the WHERE clause, 
             // but usually 'revenue' implies realized money. "Pending Balance" covers the rest.
-            // Total realized revenue (All advances + All collected balances)
+            // Total realized revenue (Repairs realized cash + All Accessory Sales)
             const realizedAdvances = await query("SELECT COALESCE(SUM(advance), 0) as total FROM repairs");
             const realizedBalances = await query("SELECT COALESCE(SUM(estimated_cost - advance), 0) as total FROM repairs WHERE balance_collected_at IS NOT NULL");
-            revenue = (parseFloat(realizedAdvances.rows[0].total) || 0) + (parseFloat(realizedBalances.rows[0].total) || 0);
+            const realizedSales = await query("SELECT COALESCE(SUM(total_price), 0) as total FROM sales").catch(() => ({ rows: [{ total: 0 }] }));
+
+            revenue = (parseFloat(realizedAdvances.rows[0].total) || 0) +
+                (parseFloat(realizedBalances.rows[0].total) || 0) +
+                (parseFloat(realizedSales.rows[0].total) || 0);
 
             // Today's Realized Revenue:
-            // 1. Advance payments made today (based on created_at)
-            // 2. Balance payments collected today (based on balance_collected_at)
+            // 1. Advance payments made today
+            // 2. Balance payments collected today
+            // 3. Store sales today
             const todayAdvanceResult = await query(
                 "SELECT COALESCE(SUM(advance), 0) as total FROM repairs WHERE DATE(created_at) = CURRENT_DATE"
             );
             const todayBalanceResult = await query(
                 "SELECT COALESCE(SUM(estimated_cost - advance), 0) as total FROM repairs WHERE DATE(balance_collected_at) = CURRENT_DATE"
             );
+            const todaySalesResult = await query(
+                "SELECT COALESCE(SUM(total_price), 0) as total FROM sales WHERE DATE(created_at) = CURRENT_DATE"
+            ).catch(() => ({ rows: [{ total: 0 }] }));
 
-            todayRevenue = (parseFloat(todayAdvanceResult.rows[0].total) || 0) + (parseFloat(todayBalanceResult.rows[0].total) || 0);
+            todayRevenue = (parseFloat(todayAdvanceResult.rows[0].total) || 0) +
+                (parseFloat(todayBalanceResult.rows[0].total) || 0) +
+                (parseFloat(todaySalesResult.rows[0].total) || 0);
 
             // Pending balances: Sum of (cost - advance) for all active repairs where balance hasn't been collected yet
             const pendingResult = await query(
@@ -61,7 +71,7 @@ export async function GET(request: Request) {
             );
             repairsThisMonth = parseInt(monthResult.rows[0].count) || 0;
 
-            // Chart Data: Should show realized cash (Advances + Balanced Collected) for each day
+            // Chart Data: Should show realized cash (Advances + Balanced Collected + Sales) for each day
             const chartInterval = period === 'MONTH' ? '30 days' : '7 days';
             const chartResult = await query(`
                 WITH DailyStats AS (
@@ -82,6 +92,16 @@ export async function GET(request: Request) {
                     FROM repairs 
                     WHERE balance_collected_at >= CURRENT_DATE - INTERVAL '${chartInterval}'
                     GROUP BY DATE(balance_collected_at)
+
+                    UNION ALL
+                    
+                    -- Daily Accessory/Store Sales
+                    SELECT 
+                        DATE(created_at) as date,
+                        SUM(total_price) as amount
+                    FROM sales 
+                    WHERE created_at >= CURRENT_DATE - INTERVAL '${chartInterval}'
+                    GROUP BY DATE(created_at)
                 )
                 SELECT 
                     to_char(date, '${period === 'MONTH' ? 'DD Mon' : 'Dy'}') as name,
@@ -89,7 +109,7 @@ export async function GET(request: Request) {
                 FROM DailyStats
                 GROUP BY date, name
                 ORDER BY date
-            `);
+            `).catch(() => ({ rows: [] }));
             chartData = chartResult.rows.map((r: any) => ({
                 name: r.name,
                 revenue: parseFloat(r.revenue) || 0
