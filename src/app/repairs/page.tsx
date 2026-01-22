@@ -84,7 +84,7 @@ export default async function RepairsListPage() {
                                 <div>
                                     <h3 className="font-bold text-lg">{repair.device_brand} {repair.device_model}</h3>
                                     <p className="text-gray-400 text-sm">{repair.customer_name} • {repair.customer_phone}</p>
-                                    <p className="text-xs text-gray-500 mt-1">Order #{repair.id?.slice(0, 8)} • {new Date(repair.created_at).toLocaleDateString()}</p>
+                                    <p className="text-xs text-gray-500 mt-1">Order #{repair.id?.slice(0, 8)} • {new Date(repair.created_at).toLocaleDateString('en-IN', { timeZone: 'Asia/Kolkata' })}</p>
                                 </div>
                             </div>
 

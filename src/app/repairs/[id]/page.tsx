@@ -110,7 +110,7 @@ export default async function RepairDetailPage({ params }: { params: { id: strin
                             {repair.created_at && (
                                 <span className="text-xs text-gray-500">
                                     {new Date(repair.created_at).toLocaleString('en-IN', {
-                                        weekday: 'short', year: 'numeric', month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit'
+                                        weekday: 'short', year: 'numeric', month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit', timeZone: 'Asia/Kolkata'
                                     })}
                                 </span>
                             )}
@@ -257,7 +257,7 @@ export default async function RepairDetailPage({ params }: { params: { id: strin
                                                 {prev.status}
                                             </span>
                                             <p className="text-gray-500 text-xs mt-2">
-                                                {new Date(prev.created_at).toLocaleDateString('en-IN')}
+                                                {new Date(prev.created_at).toLocaleDateString('en-IN', { timeZone: 'Asia/Kolkata' })}
                                             </p>
                                         </div>
                                     </div>

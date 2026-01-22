@@ -53,7 +53,7 @@ export const generateInvoicePDF = (data: any, openPrintDialog: boolean = true) =
     doc.setFont('helvetica', 'bold');
     doc.text('DATE:', 150, y);
     doc.setFont('helvetica', 'normal');
-    doc.text(new Date().toLocaleDateString('en-IN'), 150, y + 7);
+    doc.text(new Date().toLocaleDateString('en-IN', { timeZone: 'Asia/Kolkata' }), 150, y + 7);
 
     y += 30;
 

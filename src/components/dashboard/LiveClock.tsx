@@ -14,9 +14,9 @@ export const LiveClock = () => {
 
     if (!date) return null; // Avoid hydration mismatch
 
-    const dayName = date.toLocaleDateString('en-US', { weekday: 'long' });
-    const dayDate = date.toLocaleDateString('en-US', { day: 'numeric', month: 'long', year: 'numeric' });
-    const time = date.toLocaleTimeString('en-US', { hour12: true, hour: '2-digit', minute: '2-digit', second: '2-digit' });
+    const dayName = date.toLocaleDateString('en-IN', { weekday: 'long', timeZone: 'Asia/Kolkata' });
+    const dayDate = date.toLocaleDateString('en-IN', { day: 'numeric', month: 'long', year: 'numeric', timeZone: 'Asia/Kolkata' });
+    const time = date.toLocaleTimeString('en-IN', { hour12: true, hour: '2-digit', minute: '2-digit', second: '2-digit', timeZone: 'Asia/Kolkata' });
 
     return (
         <motion.div

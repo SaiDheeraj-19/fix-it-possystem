@@ -91,7 +91,7 @@ export function AdminDashboard() {
                         <h3 className="text-5xl font-bold text-white tracking-tight">{formatCurrency(data.todayRevenue)}</h3>
                         <div className="flex items-center gap-2 mt-4 text-blue-300/80 text-sm">
                             <Calendar className="w-4 h-4" />
-                            {new Date().toLocaleDateString('en-IN', { weekday: 'long', day: 'numeric', month: 'long' })}
+                            {new Date().toLocaleDateString('en-IN', { weekday: 'long', day: 'numeric', month: 'long', timeZone: 'Asia/Kolkata' })}
                         </div>
                     </div>
                 </div>
