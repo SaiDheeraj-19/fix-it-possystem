@@ -13,12 +13,18 @@ export default async function DashboardPage() {
     // Strictly enforce hard rules: Admin gets analytics, Staff gets ops.
     return (
         <div className="min-h-screen bg-black text-white p-6">
-            <header className="flex justify-between items-center mb-8 border-b border-gray-800 pb-4">
-                <div>
-                    <h1 className="text-3xl font-bold tracking-tight text-blue-500">FIX IT <span className="text-white text-lg font-normal">| Kalluru (091829 19360)</span></h1>
-                    <p className="text-gray-400 text-sm">Logged in as {session.username} ({session.role})</p>
+            <header className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-8 border-b border-gray-800 pb-4">
+                <div className="w-full md:w-auto">
+                    <h1 className="text-2xl md:text-3xl font-bold tracking-tight text-blue-500 flex flex-wrap items-baseline gap-2">
+                        FIX IT
+                        <span className="text-gray-500 text-sm md:text-lg font-normal">| Kalluru (091829 19360)</span>
+                    </h1>
+                    <div className="flex items-center gap-2 mt-1">
+                        <span className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></span>
+                        <p className="text-gray-400 text-xs md:text-sm capitalize font-medium">Logged in as {(session as any).username} {((session as any).role as string)?.toLowerCase()}</p>
+                    </div>
                 </div>
-                <a href="/api/auth/logout" className="text-red-400 hover:text-red-300 text-sm font-semibold">
+                <a href="/api/auth/logout" className="bg-red-500/10 hover:bg-red-500/20 text-red-500 px-4 py-2 rounded-lg text-xs font-bold transition-colors">
                     LOGOUT
                 </a>
             </header>

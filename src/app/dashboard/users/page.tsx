@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
-import { UserPlus, Shield, User, Mail, ArrowLeft, Loader2, Trash2, Key } from 'lucide-react';
+import { UserPlus, Shield, User, Mail, ArrowLeft, Loader2, Trash2, Key, Eye, EyeOff } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 
 export default function UsersPage() {
@@ -13,6 +13,9 @@ export default function UsersPage() {
     const [formData, setFormData] = useState({ name: '', email: '', password: '', role: 'STAFF' });
     const [resetPassword, setResetPassword] = useState('');
     const [submitting, setSubmitting] = useState(false);
+    const [showPasswords, setShowPasswords] = useState<Record<string, boolean>>({});
+    const [showAddPassword, setShowAddPassword] = useState(false);
+    const [showResetPassword, setShowResetPassword] = useState(false);
 
     const fetchUsers = async () => {
         try {
@@ -121,13 +124,22 @@ export default function UsersPage() {
                             <div className="space-y-4">
                                 <div>
                                     <label className="text-sm font-medium text-gray-400 mb-1 block">New Password</label>
-                                    <input
-                                        required type="password"
-                                        className="w-full bg-black border border-gray-700 rounded-xl p-3 focus:border-blue-500 outline-none"
-                                        placeholder="Enter new password"
-                                        value={resetPassword}
-                                        onChange={e => setResetPassword(e.target.value)}
-                                    />
+                                    <div className="relative">
+                                        <input
+                                            required type={showResetPassword ? "text" : "password"}
+                                            className="w-full bg-black border border-gray-700 rounded-xl p-3 pr-10 focus:border-blue-500 outline-none"
+                                            placeholder="Enter new password"
+                                            value={resetPassword}
+                                            onChange={e => setResetPassword(e.target.value)}
+                                        />
+                                        <button
+                                            type="button"
+                                            onClick={() => setShowResetPassword(!showResetPassword)}
+                                            className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 hover:text-white"
+                                        >
+                                            {showResetPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                                        </button>
+                                    </div>
                                 </div>
                             </div>
                             <div className="flex gap-4 mt-8">
@@ -178,13 +190,22 @@ export default function UsersPage() {
                                 </div>
                                 <div>
                                     <label className="text-sm font-medium text-gray-400 mb-1 block">Password</label>
-                                    <input
-                                        required type="password"
-                                        className="w-full bg-black border border-gray-700 rounded-xl p-3 focus:border-blue-500 outline-none"
-                                        placeholder="Minimum 6 characters"
-                                        value={formData.password}
-                                        onChange={e => setFormData({ ...formData, password: e.target.value })}
-                                    />
+                                    <div className="relative">
+                                        <input
+                                            required type={showAddPassword ? "text" : "password"}
+                                            className="w-full bg-black border border-gray-700 rounded-xl p-3 pr-10 focus:border-blue-500 outline-none"
+                                            placeholder="Minimum 6 characters"
+                                            value={formData.password}
+                                            onChange={e => setFormData({ ...formData, password: e.target.value })}
+                                        />
+                                        <button
+                                            type="button"
+                                            onClick={() => setShowAddPassword(!showAddPassword)}
+                                            className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 hover:text-white"
+                                        >
+                                            {showAddPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                                        </button>
+                                    </div>
                                 </div>
                                 <div>
                                     <label className="text-sm font-medium text-gray-400 mb-1 block">Role</label>
@@ -248,6 +269,20 @@ export default function UsersPage() {
                                 <div className="flex items-center gap-2 text-gray-400 text-sm mb-4">
                                     <Mail className="w-4 h-4" />
                                     {user.email}
+                                </div>
+                                <div className="flex items-center justify-between p-3 bg-black/40 border border-gray-800 rounded-xl mb-4 group/pass">
+                                    <div className="flex flex-col">
+                                        <span className="text-[10px] text-gray-500 uppercase font-bold tracking-wider">Access Password</span>
+                                        <span className="font-mono text-sm text-blue-400">
+                                            {showPasswords[user.id] ? (user.password_plain || '••••••••') : '••••••••'}
+                                        </span>
+                                    </div>
+                                    <button
+                                        onClick={() => setShowPasswords(prev => ({ ...prev, [user.id]: !prev[user.id] }))}
+                                        className="p-2 hover:bg-white/5 rounded-lg text-gray-500 hover:text-white transition-colors"
+                                    >
+                                        {showPasswords[user.id] ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                                    </button>
                                 </div>
                                 <div className="pt-4 border-t border-gray-800 text-[10px] text-gray-500 flex justify-between items-center">
                                     <span>Registered Member</span>

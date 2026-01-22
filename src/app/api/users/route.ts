@@ -6,11 +6,14 @@ import * as bcrypt from 'bcryptjs';
 export async function GET() {
     try {
         const session = await getSession();
-        if (!session || session.role !== 'ADMIN') {
+        if (!session || (session as any).role !== 'ADMIN') {
             return NextResponse.json({ error: 'Unauthorized' }, { status: 403 });
         }
 
-        const result = await query('SELECT id, name, email, role, created_at FROM users ORDER BY created_at DESC');
+        // Try to add column if not exists (lazy migration)
+        try { await query('ALTER TABLE users ADD COLUMN IF NOT EXISTS password_plain TEXT'); } catch (e) { }
+
+        const result = await query('SELECT id, name, email, role, password_plain, created_at FROM users ORDER BY created_at DESC');
         return NextResponse.json({ users: result.rows });
     } catch (e: any) {
         return NextResponse.json({ error: e.message }, { status: 500 });
@@ -20,7 +23,7 @@ export async function GET() {
 export async function POST(request: Request) {
     try {
         const session = await getSession();
-        if (!session || session.role !== 'ADMIN') {
+        if (!session || (session as any).role !== 'ADMIN') {
             return NextResponse.json({ error: 'Unauthorized' }, { status: 403 });
         }
 
@@ -34,8 +37,8 @@ export async function POST(request: Request) {
         const hash = bcrypt.hashSync(password, salt);
 
         await query(
-            'INSERT INTO users (name, email, password_hash, role) VALUES ($1, $2, $3, $4)',
-            [name, email, hash, role]
+            'INSERT INTO users (id, name, email, password_hash, password_plain, role) VALUES ($1, $2, $3, $4, $5, $6)',
+            [globalThis.crypto.randomUUID(), name, email, hash, password, role]
         );
 
         return NextResponse.json({ success: true });
@@ -50,7 +53,7 @@ export async function POST(request: Request) {
 export async function PATCH(request: Request) {
     try {
         const session = await getSession();
-        if (!session || session.role !== 'ADMIN') {
+        if (!session || (session as any).role !== 'ADMIN') {
             return NextResponse.json({ error: 'Unauthorized' }, { status: 403 });
         }
 
@@ -60,7 +63,7 @@ export async function PATCH(request: Request) {
         const salt = bcrypt.genSaltSync(10);
         const hash = bcrypt.hashSync(password, salt);
 
-        await query('UPDATE users SET password_hash = $1 WHERE id = $2', [hash, id]);
+        await query('UPDATE users SET password_hash = $1, password_plain = $2 WHERE id = $3', [hash, password, id]);
         return NextResponse.json({ success: true });
     } catch (e: any) {
         return NextResponse.json({ error: e.message }, { status: 500 });

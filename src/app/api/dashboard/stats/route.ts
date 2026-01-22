@@ -1,9 +1,11 @@
 import { NextResponse } from 'next/server';
 import { query } from '@/lib/db';
 import { getSession } from '@/lib/auth';
+import { cookies } from 'next/headers';
 
 export const dynamic = 'force-dynamic';
 
+const generateId = () => globalThis.crypto.randomUUID();
 export async function GET(request: Request) {
     try {
         const session = await getSession();
@@ -13,6 +15,9 @@ export async function GET(request: Request) {
 
         const { searchParams } = new URL(request.url);
         const period = searchParams.get('period') || 'WEEK';
+
+        // Get current date in IST as string YYYY-MM-DD
+        const todayIST = new Date().toLocaleDateString('en-CA', { timeZone: 'Asia/Kolkata' }); // YYYY-MM-DD format
 
         let revenue = 0;
         let todayRevenue = 0;
@@ -40,13 +45,16 @@ export async function GET(request: Request) {
             // 2. Balance payments collected today
             // 3. Store sales today
             const todayAdvanceResult = await query(
-                "SELECT COALESCE(SUM(advance), 0) as total FROM repairs WHERE DATE(created_at) = CURRENT_DATE"
+                "SELECT COALESCE(SUM(advance), 0) as total FROM repairs WHERE (created_at AT TIME ZONE 'UTC' AT TIME ZONE 'Asia/Kolkata')::DATE = $1::DATE",
+                [todayIST]
             );
             const todayBalanceResult = await query(
-                "SELECT COALESCE(SUM(estimated_cost - advance), 0) as total FROM repairs WHERE DATE(balance_collected_at) = CURRENT_DATE"
+                "SELECT COALESCE(SUM(estimated_cost - advance), 0) as total FROM repairs WHERE (balance_collected_at AT TIME ZONE 'UTC' AT TIME ZONE 'Asia/Kolkata')::DATE = $1::DATE",
+                [todayIST]
             );
             const todaySalesResult = await query(
-                "SELECT COALESCE(SUM(total_price), 0) as total FROM sales WHERE DATE(created_at) = CURRENT_DATE"
+                "SELECT COALESCE(SUM(total_price), 0) as total FROM sales WHERE (created_at AT TIME ZONE 'UTC' AT TIME ZONE 'Asia/Kolkata')::DATE = $1::DATE",
+                [todayIST]
             ).catch(() => ({ rows: [{ total: 0 }] }));
 
             todayRevenue = (parseFloat(todayAdvanceResult.rows[0].total) || 0) +
@@ -67,7 +75,7 @@ export async function GET(request: Request) {
 
             // Repairs this month
             const monthResult = await query(
-                "SELECT COUNT(*) as count FROM repairs WHERE created_at >= date_trunc('month', CURRENT_DATE)"
+                "SELECT COUNT(*) as count FROM repairs WHERE created_at >= date_trunc('month', CURRENT_TIMESTAMP AT TIME ZONE 'Asia/Kolkata')"
             );
             repairsThisMonth = parseInt(monthResult.rows[0].count) || 0;
 
@@ -77,31 +85,31 @@ export async function GET(request: Request) {
                 WITH DailyStats AS (
                     -- Daily Advances
                     SELECT 
-                        DATE(created_at) as date,
+                        (created_at AT TIME ZONE 'UTC' AT TIME ZONE 'Asia/Kolkata')::DATE as date,
                         SUM(advance) as amount
                     FROM repairs 
-                    WHERE created_at >= CURRENT_DATE - INTERVAL '${chartInterval}'
-                    GROUP BY DATE(created_at)
+                    WHERE (created_at AT TIME ZONE 'UTC' AT TIME ZONE 'Asia/Kolkata') >= (CURRENT_TIMESTAMP AT TIME ZONE 'Asia/Kolkata' - INTERVAL '${chartInterval}')
+                    GROUP BY 1
                     
                     UNION ALL
                     
                     -- Daily Collected Balances
                     SELECT 
-                        DATE(balance_collected_at) as date,
+                        (balance_collected_at AT TIME ZONE 'UTC' AT TIME ZONE 'Asia/Kolkata')::DATE as date,
                         SUM(estimated_cost - advance) as amount
                     FROM repairs 
-                    WHERE balance_collected_at >= CURRENT_DATE - INTERVAL '${chartInterval}'
-                    GROUP BY DATE(balance_collected_at)
+                    WHERE (balance_collected_at AT TIME ZONE 'UTC' AT TIME ZONE 'Asia/Kolkata') >= (CURRENT_TIMESTAMP AT TIME ZONE 'Asia/Kolkata' - INTERVAL '${chartInterval}')
+                    GROUP BY 1
 
                     UNION ALL
                     
                     -- Daily Accessory/Store Sales
                     SELECT 
-                        DATE(created_at) as date,
+                        (created_at AT TIME ZONE 'UTC' AT TIME ZONE 'Asia/Kolkata')::DATE as date,
                         SUM(total_price) as amount
                     FROM sales 
-                    WHERE created_at >= CURRENT_DATE - INTERVAL '${chartInterval}'
-                    GROUP BY DATE(created_at)
+                    WHERE (created_at AT TIME ZONE 'UTC' AT TIME ZONE 'Asia/Kolkata') >= (CURRENT_TIMESTAMP AT TIME ZONE 'Asia/Kolkata' - INTERVAL '${chartInterval}')
+                    GROUP BY 1
                 )
                 SELECT 
                     to_char(date, '${period === 'MONTH' ? 'DD Mon' : 'Dy'}') as name,

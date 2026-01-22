@@ -126,13 +126,13 @@ export function RepairActions({ repairId, currentStatus, repair }: RepairActions
                 <h3 className="text-lg font-semibold text-gray-300">Actions</h3>
             </div>
 
-            <div className="flex flex-wrap gap-3">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:flex lg:flex-wrap gap-3">
                 {/* Print Invoice */}
                 <button
                     onClick={prepareInvoice}
-                    className="flex items-center gap-2 bg-gray-700 hover:bg-gray-600 text-white px-4 py-2 rounded-lg font-medium transition-colors"
+                    className="flex items-center justify-center gap-2 bg-gray-700 hover:bg-gray-600 text-white px-4 py-3 rounded-xl font-bold transition-all active:scale-95"
                 >
-                    <Printer className="w-4 h-4" />
+                    <Printer className="w-5 h-5" />
                     Print Invoice
                 </button>
 
@@ -141,18 +141,18 @@ export function RepairActions({ repairId, currentStatus, repair }: RepairActions
                     <button
                         onClick={collectBalance}
                         disabled={loading}
-                        className="flex items-center gap-2 bg-purple-600 hover:bg-purple-700 text-white px-4 py-2 rounded-lg font-medium transition-colors"
+                        className="flex items-center justify-center gap-2 bg-purple-600 hover:bg-purple-700 text-white px-4 py-3 rounded-xl font-bold transition-all active:scale-95"
                     >
-                        <Wallet className="w-4 h-4" />
-                        Collect Balance (Rs. {balance})
+                        <Wallet className="w-5 h-5" />
+                        Collect Balance
                     </button>
                 )}
 
                 {balance > 0 && isBalanceCollected && (
-                    <span className="flex items-center gap-2 bg-purple-900/30 text-purple-400 px-4 py-2 rounded-lg font-medium border border-purple-500/30">
-                        <CheckCircle className="w-4 h-4" />
+                    <div className="flex items-center justify-center gap-2 bg-purple-900/30 text-purple-400 px-4 py-3 rounded-xl font-bold border border-purple-500/30">
+                        <CheckCircle className="w-5 h-5" />
                         Balance Collected
-                    </span>
+                    </div>
                 )}
 
                 {/* Status Update Buttons */}
@@ -162,22 +162,22 @@ export function RepairActions({ repairId, currentStatus, repair }: RepairActions
                             key={status}
                             onClick={() => updateStatus(status)}
                             disabled={loading}
-                            className={`flex items-center gap-2 ${color} text-white px-4 py-2 rounded-lg font-medium transition-colors disabled:opacity-50`}
+                            className={`flex items-center justify-center gap-2 ${color} text-white px-4 py-3 rounded-xl font-bold transition-all active:scale-95 disabled:opacity-50`}
                         >
-                            <Icon className="w-4 h-4" />
+                            <Icon className="w-5 h-5" />
                             {label}
                         </button>
                     )
                 ))}
 
-                {/* Delete Button - Danger Zone */}
+                {/* Delete Button */}
                 <button
                     onClick={deleteRepair}
                     disabled={loading}
-                    className="flex items-center gap-2 bg-red-900/20 hover:bg-red-900/40 text-red-500 px-4 py-2 rounded-lg font-medium transition-colors border border-red-900/50 ml-auto"
+                    className="flex items-center justify-center gap-2 bg-red-900/20 hover:bg-red-900/40 text-red-500 px-4 py-3 rounded-xl font-bold transition-all border border-red-900/50"
                 >
-                    <Trash2 className="w-4 h-4" />
-                    Delete
+                    <Trash2 className="w-5 h-5" />
+                    Delete Order
                 </button>
             </div>
 

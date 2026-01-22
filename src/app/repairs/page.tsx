@@ -60,15 +60,18 @@ export default async function RepairsListPage() {
     };
 
     return (
-        <div className="min-h-screen bg-black text-white p-6">
+        <div className="min-h-screen bg-black text-white p-4 md:p-8">
             <div className="max-w-6xl mx-auto">
-                <div className="flex justify-between items-center mb-8">
-                    <h1 className="text-3xl font-bold">Repair Orders</h1>
-                    <div className="flex gap-4">
-                        <Link href="/dashboard" className="text-gray-400 hover:text-white text-sm">
-                            ← Back to Dashboard
+                <div className="flex flex-col md:flex-row md:justify-between md:items-center gap-4 mb-8">
+                    <div>
+                        <h1 className="text-3xl font-bold tracking-tight">Repair Orders</h1>
+                        <p className="text-gray-500 mt-1">Manage all device repairs and service jobs.</p>
+                    </div>
+                    <div className="flex items-center gap-3">
+                        <Link href="/dashboard" className="text-gray-400 hover:text-white text-sm bg-gray-900 border border-gray-800 px-4 py-2.5 rounded-xl transition-colors">
+                            Back
                         </Link>
-                        <Link href="/repairs/new" className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2 rounded-full font-semibold">
+                        <Link href="/repairs/new" className="flex-1 md:flex-none text-center bg-blue-600 hover:bg-blue-700 text-white px-6 py-2.5 rounded-xl font-bold shadow-lg shadow-blue-900/20 transition-all">
                             + New Repair
                         </Link>
                     </div>
@@ -76,38 +79,55 @@ export default async function RepairsListPage() {
 
                 <div className="grid gap-4">
                     {repairs.map((repair: any) => (
-                        <div key={repair.id} className="bg-gray-900 border border-gray-800 rounded-xl p-5 flex justify-between items-center hover:border-gray-600 transition-colors">
-                            <div className="flex items-center space-x-4">
-                                <div className="p-3 bg-gray-800 rounded-lg">
-                                    <Smartphone className="text-gray-400" />
-                                </div>
-                                <div>
-                                    <h3 className="font-bold text-lg">{repair.device_brand} {repair.device_model}</h3>
-                                    <p className="text-gray-400 text-sm">{repair.customer_name} • {repair.customer_phone}</p>
-                                    <p className="text-xs text-gray-500 mt-1">Order #{repair.id?.slice(0, 8)} • {new Date(repair.created_at).toLocaleDateString('en-IN', { timeZone: 'Asia/Kolkata' })}</p>
+                        <Link key={repair.id} href={`/repairs/${repair.id}`} className="block group">
+                            <div className="bg-gray-900/50 border border-gray-800 rounded-2xl p-4 md:p-6 hover:border-blue-500/50 transition-all">
+                                <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+                                    <div className="flex items-center gap-4">
+                                        <div className="p-3 bg-gray-800 rounded-xl shrink-0">
+                                            <Smartphone className="text-blue-400 w-6 h-6" />
+                                        </div>
+                                        <div className="min-w-0">
+                                            <h3 className="font-bold text-lg text-white truncate group-hover:text-blue-400 transition-colors">
+                                                {repair.device_brand} {repair.device_model}
+                                            </h3>
+                                            <div className="flex flex-wrap items-center gap-x-2 gap-y-1 text-sm text-gray-400 mt-0.5">
+                                                <span className="font-medium text-gray-300">{repair.customer_name}</span>
+                                                <span className="hidden md:inline text-gray-600">•</span>
+                                                <span>{repair.customer_phone}</span>
+                                            </div>
+                                            <p className="text-[10px] md:text-xs text-gray-600 font-mono mt-1 uppercase tracking-wider">
+                                                Order #{repair.id?.slice(0, 8)} • {new Date(repair.created_at).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric', timeZone: 'Asia/Kolkata' })}
+                                            </p>
+                                        </div>
+                                    </div>
+
+                                    <div className="flex items-center justify-between md:justify-end gap-6 pt-4 md:pt-0 border-t md:border-t-0 border-gray-800">
+                                        <div className="flex flex-col md:items-end">
+                                            <span className="text-[10px] uppercase text-gray-500 font-bold tracking-widest">Balance</span>
+                                            <span className={`text-xl font-black ${parseFloat(repair.estimated_cost) - parseFloat(repair.advance) > 0 ? 'text-red-400' : 'text-green-400'}`}>
+                                                ₹{(parseFloat(repair.estimated_cost) - parseFloat(repair.advance)).toLocaleString('en-IN')}
+                                            </span>
+                                        </div>
+
+                                        <div className="flex items-center gap-3">
+                                            <span className={`px-3 py-1.5 rounded-lg text-[10px] font-black uppercase tracking-wider border ${getStatusColor(repair.status)}`}>
+                                                {repair.status}
+                                            </span>
+                                            <div className="p-2 text-gray-600 group-hover:text-white transition-colors">
+                                                →
+                                            </div>
+                                        </div>
+                                    </div>
                                 </div>
                             </div>
-
-                            <div className="flex items-center space-x-6">
-                                <div className="text-right">
-                                    <p className="text-sm text-gray-400">Balance</p>
-                                    <p className="font-mono font-bold text-red-400">₹{(repair.estimated_cost - repair.advance).toLocaleString()}</p>
-                                </div>
-
-                                <span className={`px-3 py-1 rounded-full text-xs font-bold border ${getStatusColor(repair.status)}`}>
-                                    {repair.status}
-                                </span>
-
-                                <Link href={`/repairs/${repair.id}`} className="text-blue-400 hover:text-white underline text-sm">
-                                    View →
-                                </Link>
-                            </div>
-                        </div>
+                        </Link>
                     ))}
 
                     {repairs.length === 0 && (
-                        <div className="text-center py-20 text-gray-500">
-                            No repairs found. Create one to get started.
+                        <div className="text-center py-24 bg-gray-900/20 border border-dashed border-gray-800 rounded-3xl">
+                            <Smartphone className="w-12 h-12 text-gray-800 mx-auto mb-4" />
+                            <p className="text-gray-500">No repairs found.</p>
+                            <Link href="/repairs/new" className="text-blue-500 font-medium hover:underline mt-2 inline-block">Create your first repair order</Link>
                         </div>
                     )}
                 </div>

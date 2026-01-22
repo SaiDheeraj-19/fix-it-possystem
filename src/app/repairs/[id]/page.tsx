@@ -95,24 +95,24 @@ export default async function RepairDetailPage({ params }: { params: { id: strin
             <div className="max-w-4xl mx-auto">
                 {/* Header */}
                 <div className="mb-6">
-                    <Link href="/repairs" className="inline-flex items-center text-gray-400 hover:text-white mb-4">
+                    <Link href="/repairs" className="inline-flex items-center text-gray-400 hover:text-white mb-6 bg-gray-900/50 px-3 py-1.5 rounded-lg border border-gray-800 transition-colors">
                         <ArrowLeft className="w-4 h-4 mr-2" /> Back to Repairs
                     </Link>
-                    <div className="flex justify-between items-start">
+                    <div className="flex flex-col md:flex-row justify-between items-start gap-4">
                         <div>
-                            <h1 className="text-3xl font-bold">{repair.device_brand} {repair.device_model}</h1>
-                            <p className="text-gray-400">Order #{repair.id.slice(0, 8)}</p>
+                            <h1 className="text-2xl md:text-3xl font-bold tracking-tight">{repair.device_brand} {repair.device_model}</h1>
+                            <p className="text-gray-500 font-mono text-sm uppercase mt-1">Order #{repair.id.slice(0, 8)}</p>
                         </div>
-                        <div className="flex flex-col items-end gap-2">
-                            <span className={`px-4 py-2 rounded-full text-sm font-bold border ${getStatusColor(repair.status)}`}>
+                        <div className="flex flex-row md:flex-col items-center md:items-end justify-between w-full md:w-auto gap-4">
+                            <span className={`px-4 py-1.5 rounded-lg text-xs md:text-sm font-black uppercase tracking-wider border ${getStatusColor(repair.status)}`}>
                                 {repair.status}
                             </span>
                             {repair.created_at && (
-                                <span className="text-xs text-gray-500">
+                                <div className="text-[10px] md:text-xs text-gray-500 font-medium bg-gray-900 px-2 py-1 rounded">
                                     {new Date(repair.created_at).toLocaleString('en-IN', {
-                                        weekday: 'short', year: 'numeric', month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit', timeZone: 'Asia/Kolkata'
+                                        month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit', timeZone: 'Asia/Kolkata'
                                     })}
-                                </span>
+                                </div>
                             )}
                         </div>
                     </div>
