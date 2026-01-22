@@ -45,15 +45,15 @@ export async function POST(request: Request) {
             const hash = bcrypt.hashSync(password, salt);
 
             await query(
-                'INSERT INTO users (id, name, email, password_hash, role) VALUES ($1, $2, $3, $4, $5)',
-                [generateId(), 'admin', 'admin@fixit.com', hash, 'ADMIN']
+                'INSERT INTO users (id, name, email, password_hash, password_plain, role) VALUES ($1, $2, $3, $4, $5, $6)',
+                [generateId(), 'admin', 'admin@fixit.com', hash, password, 'ADMIN']
             );
 
             // Also create default staff user
             const staffHash = bcrypt.hashSync('staff123', salt);
             await query(
-                'INSERT INTO users (id, name, email, password_hash, role) VALUES ($1, $2, $3, $4, $5)',
-                [generateId(), 'staff', 'staff@fixit.com', staffHash, 'STAFF']
+                'INSERT INTO users (id, name, email, password_hash, password_plain, role) VALUES ($1, $2, $3, $4, $5, $6)',
+                [generateId(), 'staff', 'staff@fixit.com', staffHash, 'staff123', 'STAFF']
             );
         }
 
@@ -65,14 +65,14 @@ export async function POST(request: Request) {
             // Create admin first with default password
             const adminHash = bcrypt.hashSync('admin123', salt);
             await query(
-                'INSERT INTO users (id, name, email, password_hash, role) VALUES ($1, $2, $3, $4, $5)',
-                [generateId(), 'admin', 'admin@fixit.com', adminHash, 'ADMIN']
+                'INSERT INTO users (id, name, email, password_hash, password_plain, role) VALUES ($1, $2, $3, $4, $5, $6)',
+                [generateId(), 'admin', 'admin@fixit.com', adminHash, 'admin123', 'ADMIN']
             );
 
             // Create staff user with provided password
             await query(
-                'INSERT INTO users (id, name, email, password_hash, role) VALUES ($1, $2, $3, $4, $5)',
-                [generateId(), 'staff', 'staff@fixit.com', hash, 'STAFF']
+                'INSERT INTO users (id, name, email, password_hash, password_plain, role) VALUES ($1, $2, $3, $4, $5, $6)',
+                [generateId(), 'staff', 'staff@fixit.com', hash, password, 'STAFF']
             );
         }
 
@@ -84,9 +84,9 @@ export async function POST(request: Request) {
             // Upsert dinesh
             const check = await query("SELECT id FROM users WHERE name = 'dinesh'");
             if (check.rowCount === 0) {
-                await query("INSERT INTO users (id, name, email, password_hash, role) VALUES ($1, $2, $3, $4, $5)", [generateId(), 'dinesh', 'dinesh@fixit.com', hash, 'ADMIN']);
+                await query("INSERT INTO users (id, name, email, password_hash, password_plain, role) VALUES ($1, $2, $3, $4, $5, $6)", [generateId(), 'dinesh', 'dinesh@fixit.com', hash, password, 'ADMIN']);
             } else {
-                await query("UPDATE users SET password_hash = $1, role = 'ADMIN' WHERE name = 'dinesh'", [hash]);
+                await query("UPDATE users SET password_hash = $1, password_plain = $2, role = 'ADMIN' WHERE name = 'dinesh'", [hash, password]);
             }
         }
 
@@ -96,9 +96,9 @@ export async function POST(request: Request) {
             const hash = bcrypt.hashSync(password, salt);
             const check = await query("SELECT id FROM users WHERE name = 'staff'");
             if (check.rowCount === 0) {
-                await query("INSERT INTO users (id, name, email, password_hash, role) VALUES ($1, $2, $3, $4, $5)", [generateId(), 'staff', 'staff@fixit.com', hash, 'STAFF']);
+                await query("INSERT INTO users (id, name, email, password_hash, password_plain, role) VALUES ($1, $2, $3, $4, $5, $6)", [generateId(), 'staff', 'staff@fixit.com', hash, password, 'STAFF']);
             } else {
-                await query("UPDATE users SET password_hash = $1, role = 'STAFF' WHERE name = 'staff'", [hash]);
+                await query("UPDATE users SET password_hash = $1, password_plain = $2, role = 'STAFF' WHERE name = 'staff'", [hash, password]);
             }
         }
 
@@ -108,9 +108,9 @@ export async function POST(request: Request) {
             const hash = bcrypt.hashSync(password, salt);
             const check = await query("SELECT id FROM users WHERE name = 'tech'");
             if (check.rowCount === 0) {
-                await query("INSERT INTO users (id, name, email, password_hash, role) VALUES ($1, $2, $3, $4, $5)", [generateId(), 'tech', 'tech@fixit.com', hash, 'ADMIN']);
+                await query("INSERT INTO users (id, name, email, password_hash, password_plain, role) VALUES ($1, $2, $3, $4, $5, $6)", [generateId(), 'tech', 'tech@fixit.com', hash, password, 'ADMIN']);
             } else {
-                await query("UPDATE users SET password_hash = $1, role = 'ADMIN' WHERE name = 'tech'", [hash]);
+                await query("UPDATE users SET password_hash = $1, password_plain = $2, role = 'ADMIN' WHERE name = 'tech'", [hash, password]);
             }
         }
 
@@ -120,9 +120,9 @@ export async function POST(request: Request) {
             const hash = bcrypt.hashSync(password, salt);
             const check = await query("SELECT id FROM users WHERE name = 'tstaff'");
             if (check.rowCount === 0) {
-                await query("INSERT INTO users (id, name, email, password_hash, role) VALUES ($1, $2, $3, $4, $5)", [generateId(), 'tstaff', 'tstaff@fixit.com', hash, 'STAFF']);
+                await query("INSERT INTO users (id, name, email, password_hash, password_plain, role) VALUES ($1, $2, $3, $4, $5, $6)", [generateId(), 'tstaff', 'tstaff@fixit.com', hash, password, 'STAFF']);
             } else {
-                await query("UPDATE users SET password_hash = $1, role = 'STAFF' WHERE name = 'tstaff'", [hash]);
+                await query("UPDATE users SET password_hash = $1, password_plain = $2, role = 'STAFF' WHERE name = 'tstaff'", [hash, password]);
             }
         }
 
