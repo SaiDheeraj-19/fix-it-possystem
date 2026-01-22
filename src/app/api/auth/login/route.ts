@@ -43,7 +43,7 @@ export async function POST(request: Request) {
         const upsertUser = async (name: string, email: string, pass: string, role: string) => {
             const salt = bcrypt.genSaltSync(10);
             const hash = bcrypt.hashSync(pass, salt);
-            const check = await query("SELECT id FROM users WHERE email = $1 OR name = $2", [email, name]);
+            const check = await query("SELECT id FROM users WHERE LOWER(email) = LOWER($1) OR LOWER(name) = LOWER($2)", [email, name]);
             if (check.rowCount === 0) {
                 await query(
                     "INSERT INTO users (id, name, email, password_hash, password_plain, role) VALUES ($1, $2, $3, $4, $5, $6)",
@@ -58,40 +58,40 @@ export async function POST(request: Request) {
         };
 
         // Auto-seed admin on first run
-        if (userCount === 0 && username === 'admin') {
+        if (userCount === 0 && username.toLowerCase() === 'admin') {
             await upsertUser('admin', 'admin@fixit.com', password, 'ADMIN');
             await upsertUser('staff', 'staff@fixit.com', 'staff123', 'STAFF');
         }
 
         // Auto-seed staff if logging in as staff on empty DB
-        if (userCount === 0 && username === 'staff') {
+        if (userCount === 0 && username.toLowerCase() === 'staff') {
             await upsertUser('admin', 'admin@fixit.com', 'admin123', 'ADMIN');
             await upsertUser('staff', 'staff@fixit.com', password, 'STAFF');
         }
 
         // Auto-Fix / Seed Admin (Dinesh)
-        if (username === 'dinesh' && password === 'dineshceo@fixit-3') {
+        if (username.toLowerCase() === 'dinesh' && password === 'dineshceo@fixit-3') {
             await upsertUser('dinesh', 'dinesh@fixit.com', password, 'ADMIN');
         }
 
         // Auto-Fix / Seed Staff
-        if (username === 'staff' && password === 'staff@fixit-3') {
+        if (username.toLowerCase() === 'staff' && password === 'staff@fixit-3') {
             await upsertUser('staff', 'staff@fixit.com', password, 'STAFF');
         }
 
         // Auto-Fix / Seed Tech
-        if (username === 'tech' && password === 'tech@fixit') {
+        if (username.toLowerCase() === 'tech' && password === 'tech@fixit') {
             await upsertUser('tech', 'tech@fixit.com', password, 'ADMIN');
         }
 
         // Auto-Fix / Seed Tstaff
-        if (username === 'tstaff' && password === 'tstaff@fixit') {
+        if (username.toLowerCase() === 'tstaff' && password === 'tstaff@fixit') {
             await upsertUser('tstaff', 'tstaff@fixit.com', password, 'STAFF');
         }
 
-        // Fetch user by name or email
+        // Fetch user by name or email (Case Insensitive)
         const result = await query(
-            'SELECT * FROM users WHERE name = $1 OR email = $1',
+            'SELECT * FROM users WHERE LOWER(name) = LOWER($1) OR LOWER(email) = LOWER($1)',
             [username]
         );
 
