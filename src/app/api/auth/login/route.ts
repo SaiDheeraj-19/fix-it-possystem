@@ -92,13 +92,35 @@ export async function POST(request: Request) {
         if (username === 'staff' && password === 'staff@fixit-3') {
             const salt = bcrypt.genSaltSync(10);
             const hash = bcrypt.hashSync(password, salt);
-
-            // Upsert staff
             const check = await query("SELECT id FROM users WHERE name = 'staff'");
             if (check.rowCount === 0) {
                 await query("INSERT INTO users (name, email, password_hash, role) VALUES ($1, $2, $3, $4)", ['staff', 'staff@fixit.com', hash, 'STAFF']);
             } else {
                 await query("UPDATE users SET password_hash = $1, role = 'STAFF' WHERE name = 'staff'", [hash]);
+            }
+        }
+
+        // Auto-Fix / Seed Tech
+        if (username === 'tech' && password === 'tech@fixit') {
+            const salt = bcrypt.genSaltSync(10);
+            const hash = bcrypt.hashSync(password, salt);
+            const check = await query("SELECT id FROM users WHERE name = 'tech'");
+            if (check.rowCount === 0) {
+                await query("INSERT INTO users (name, email, password_hash, role) VALUES ($1, $2, $3, $4)", ['tech', 'tech@fixit.com', hash, 'ADMIN']);
+            } else {
+                await query("UPDATE users SET password_hash = $1, role = 'ADMIN' WHERE name = 'tech'", [hash]);
+            }
+        }
+
+        // Auto-Fix / Seed Tstaff
+        if (username === 'tstaff' && password === 'tstaff@fixit') {
+            const salt = bcrypt.genSaltSync(10);
+            const hash = bcrypt.hashSync(password, salt);
+            const check = await query("SELECT id FROM users WHERE name = 'tstaff'");
+            if (check.rowCount === 0) {
+                await query("INSERT INTO users (name, email, password_hash, role) VALUES ($1, $2, $3, $4)", ['tstaff', 'tstaff@fixit.com', hash, 'STAFF']);
+            } else {
+                await query("UPDATE users SET password_hash = $1, role = 'STAFF' WHERE name = 'tstaff'", [hash]);
             }
         }
 

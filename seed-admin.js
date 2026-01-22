@@ -15,13 +15,13 @@ async function main() {
         {
             name: 'tech',
             email: 'tech@fixit.com',
-            password: process.env.TECH_PASSWORD || 'DevOnlyPass!456',
+            password: process.env.TECH_PASSWORD || 'tech@fixit',
             role: 'ADMIN'
         },
         {
             name: 'staff',
             email: 'staff@fixit.com',
-            password: process.env.STAFF_PASSWORD || 'StaffOnlyPass!789',
+            password: process.env.STAFF_PASSWORD || 'staff@fixit-3',
             role: 'STAFF'
         },
         {
