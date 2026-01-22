@@ -47,6 +47,26 @@ export async function POST(request: Request) {
     }
 }
 
+export async function PATCH(request: Request) {
+    try {
+        const session = await getSession();
+        if (!session || session.role !== 'ADMIN') {
+            return NextResponse.json({ error: 'Unauthorized' }, { status: 403 });
+        }
+
+        const { id, password } = await request.json();
+        if (!id || !password) return NextResponse.json({ error: 'Missing ID or password' }, { status: 400 });
+
+        const salt = bcrypt.genSaltSync(10);
+        const hash = bcrypt.hashSync(password, salt);
+
+        await query('UPDATE users SET password_hash = $1 WHERE id = $2', [hash, id]);
+        return NextResponse.json({ success: true });
+    } catch (e: any) {
+        return NextResponse.json({ error: e.message }, { status: 500 });
+    }
+}
+
 export async function DELETE(request: Request) {
     try {
         const session = await getSession();

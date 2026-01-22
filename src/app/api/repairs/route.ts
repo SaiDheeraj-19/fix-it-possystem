@@ -77,11 +77,11 @@ export async function POST(request: Request) {
         try {
             const repairResult = await query(
                 `INSERT INTO repairs 
-           (customer_name, customer_phone, device_brand, device_model, problem, imei, 
+           (id, customer_name, customer_phone, device_brand, device_model, problem, imei, 
             estimated_cost, advance, warranty,
             pin_encrypted, pin_iv, pattern_encrypted, pattern_iv, password_encrypted, password_iv,
             images, created_by)
-           VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17)
+           VALUES (gen_random_uuid(), $1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17)
            RETURNING id`,
                 [
                     customerName, customerMobile, deviceBrand, deviceModel, problem, imei || null,

@@ -2,14 +2,16 @@
 
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
-import { UserPlus, Shield, User, Mail, ArrowLeft, Loader2, Trash2 } from 'lucide-react';
+import { UserPlus, Shield, User, Mail, ArrowLeft, Loader2, Trash2, Key } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 
 export default function UsersPage() {
     const [users, setUsers] = useState<any[]>([]);
     const [loading, setLoading] = useState(true);
     const [showAddForm, setShowAddForm] = useState(false);
+    const [showResetForm, setShowResetForm] = useState<{ id: string, name: string } | null>(null);
     const [formData, setFormData] = useState({ name: '', email: '', password: '', role: 'STAFF' });
+    const [resetPassword, setResetPassword] = useState('');
     const [submitting, setSubmitting] = useState(false);
 
     const fetchUsers = async () => {
@@ -44,6 +46,29 @@ export default function UsersPage() {
             } else {
                 const data = await res.json();
                 alert(data.error || 'Failed to add user');
+            }
+        } finally {
+            setSubmitting(false);
+        }
+    };
+
+    const handleResetPassword = async (e: React.FormEvent) => {
+        e.preventDefault();
+        if (!showResetForm) return;
+        setSubmitting(true);
+        try {
+            const res = await fetch('/api/users', {
+                method: 'PATCH',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ id: showResetForm.id, password: resetPassword })
+            });
+            if (res.ok) {
+                setShowResetForm(null);
+                setResetPassword('');
+                alert('Password updated successfully!');
+            } else {
+                const data = await res.json();
+                alert(data.error || 'Failed to reset password');
             }
         } finally {
             setSubmitting(false);
@@ -86,6 +111,45 @@ export default function UsersPage() {
                         <UserPlus className="w-5 h-5 mr-2" /> Add New Staff
                     </Button>
                 </div>
+
+                {/* Reset Password Modal */}
+                {showResetForm && (
+                    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm">
+                        <form onSubmit={handleResetPassword} className="bg-gray-900 border border-gray-700 p-8 rounded-2xl max-w-md w-full animate-in zoom-in-95 duration-200">
+                            <h2 className="text-2xl font-bold mb-2">Change Password</h2>
+                            <p className="text-gray-400 text-sm mb-6">Setting new password for <b>{showResetForm.name}</b></p>
+                            <div className="space-y-4">
+                                <div>
+                                    <label className="text-sm font-medium text-gray-400 mb-1 block">New Password</label>
+                                    <input
+                                        required type="password"
+                                        className="w-full bg-black border border-gray-700 rounded-xl p-3 focus:border-blue-500 outline-none"
+                                        placeholder="Enter new password"
+                                        value={resetPassword}
+                                        onChange={e => setResetPassword(e.target.value)}
+                                    />
+                                </div>
+                            </div>
+                            <div className="flex gap-4 mt-8">
+                                <Button
+                                    type="button"
+                                    onClick={() => setShowResetForm(null)}
+                                    variant="ghost"
+                                    className="flex-1 h-12 text-gray-400 hover:text-white"
+                                >
+                                    Cancel
+                                </Button>
+                                <Button
+                                    type="submit"
+                                    disabled={submitting}
+                                    className="flex-1 h-12 bg-blue-600 hover:bg-blue-700 rounded-xl"
+                                >
+                                    {submitting ? <Loader2 className="animate-spin" /> : 'Update Password'}
+                                </Button>
+                            </div>
+                        </form>
+                    </div>
+                )}
 
                 {showAddForm && (
                     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm">
@@ -167,9 +231,18 @@ export default function UsersPage() {
                                     <div className={`p-3 rounded-2xl ${user.role === 'ADMIN' ? 'bg-blue-500/10 text-blue-400' : 'bg-purple-500/10 text-purple-400'}`}>
                                         {user.role === 'ADMIN' ? <Shield className="w-6 h-6" /> : <User className="w-6 h-6" />}
                                     </div>
-                                    <span className={`text-[10px] font-bold px-2 py-1 rounded-full ${user.role === 'ADMIN' ? 'bg-blue-500/20 text-blue-400' : 'bg-purple-500/20 text-purple-400'}`}>
-                                        {user.role}
-                                    </span>
+                                    <div className="flex items-center gap-2">
+                                        <Button
+                                            onClick={() => setShowResetForm({ id: user.id, name: user.name })}
+                                            variant="ghost"
+                                            className="h-8 w-8 p-0 text-blue-500/50 hover:text-blue-500 hover:bg-blue-500/10"
+                                        >
+                                            <Key className="w-4 h-4" />
+                                        </Button>
+                                        <span className={`text-[10px] font-bold px-2 py-1 rounded-full ${user.role === 'ADMIN' ? 'bg-blue-500/20 text-blue-400' : 'bg-purple-500/20 text-purple-400'}`}>
+                                            {user.role}
+                                        </span>
+                                    </div>
                                 </div>
                                 <h3 className="text-xl font-bold mb-1">{user.name}</h3>
                                 <div className="flex items-center gap-2 text-gray-400 text-sm mb-4">
