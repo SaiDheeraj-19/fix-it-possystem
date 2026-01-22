@@ -1,11 +1,9 @@
 import { NextResponse } from 'next/server';
 import { query } from '@/lib/db';
 import { getSession } from '@/lib/auth';
-import { cookies } from 'next/headers';
 
 export const dynamic = 'force-dynamic';
 
-const generateId = () => globalThis.crypto.randomUUID();
 export async function GET(request: Request) {
     try {
         const session = await getSession();
@@ -15,116 +13,80 @@ export async function GET(request: Request) {
 
         const { searchParams } = new URL(request.url);
         const period = searchParams.get('period') || 'WEEK';
-
-        // Get current date in IST as string YYYY-MM-DD
-        const todayIST = new Date().toLocaleDateString('en-CA', { timeZone: 'Asia/Kolkata' }); // YYYY-MM-DD format
+        const chartDays = period === 'MONTH' ? 30 : 7;
 
         let revenue = 0;
         let todayRevenue = 0;
         let pendingBalance = 0;
         let activeRepairs = 0;
         let repairsThisMonth = 0;
-        let chartData: { name: string; revenue: number }[] = [];
+        let chartData: any[] = [];
 
         try {
-            // Total confirmed revenue (Delivered items) - NOTE: User said revenue is not updating.
-            // Usually revenue is recognized when status is DELIVERED. 
-            // If user wants ALL repairs revenue even if not delivered, we remove the WHERE clause, 
-            // but usually 'revenue' implies realized money. "Pending Balance" covers the rest.
-            // Total realized revenue (Repairs realized cash + All Accessory Sales)
-            const realizedAdvances = await query("SELECT COALESCE(SUM(advance), 0) as total FROM repairs");
-            const realizedBalances = await query("SELECT COALESCE(SUM(estimated_cost - advance), 0) as total FROM repairs WHERE balance_collected_at IS NOT NULL");
-            const realizedSales = await query("SELECT COALESCE(SUM(total_price), 0) as total FROM sales").catch(() => ({ rows: [{ total: 0 }] }));
-
-            revenue = (parseFloat(realizedAdvances.rows[0].total) || 0) +
-                (parseFloat(realizedBalances.rows[0].total) || 0) +
-                (parseFloat(realizedSales.rows[0].total) || 0);
-
-            // Today's Realized Revenue:
-            // 1. Advance payments made today
-            // 2. Balance payments collected today
-            // 3. Store sales today
-            const todayAdvanceResult = await query(
-                "SELECT COALESCE(SUM(advance), 0) as total FROM repairs WHERE (created_at AT TIME ZONE 'UTC' AT TIME ZONE 'Asia/Kolkata')::DATE = $1::DATE",
-                [todayIST]
-            );
-            const todayBalanceResult = await query(
-                "SELECT COALESCE(SUM(estimated_cost - advance), 0) as total FROM repairs WHERE (balance_collected_at AT TIME ZONE 'UTC' AT TIME ZONE 'Asia/Kolkata')::DATE = $1::DATE",
-                [todayIST]
-            );
-            const todaySalesResult = await query(
-                "SELECT COALESCE(SUM(total_price), 0) as total FROM sales WHERE (created_at AT TIME ZONE 'UTC' AT TIME ZONE 'Asia/Kolkata')::DATE = $1::DATE",
-                [todayIST]
-            ).catch(() => ({ rows: [{ total: 0 }] }));
-
-            todayRevenue = (parseFloat(todayAdvanceResult.rows[0].total) || 0) +
-                (parseFloat(todayBalanceResult.rows[0].total) || 0) +
-                (parseFloat(todaySalesResult.rows[0].total) || 0);
-
-            // Pending balances: Sum of (cost - advance) for all active repairs where balance hasn't been collected yet
-            const pendingResult = await query(
-                "SELECT COALESCE(SUM(estimated_cost - advance), 0) as total FROM repairs WHERE status NOT IN ('DELIVERED', 'CANCELLED') AND balance_collected_at IS NULL"
-            );
-            pendingBalance = parseFloat(pendingResult.rows[0].total) || 0;
-
-            // Active repairs count
-            const activeResult = await query(
-                "SELECT COUNT(*) as count FROM repairs WHERE status NOT IN ('DELIVERED', 'CANCELLED')"
-            );
-            activeRepairs = parseInt(activeResult.rows[0].count) || 0;
-
-            // Repairs this month
-            const monthResult = await query(
-                "SELECT COUNT(*) as count FROM repairs WHERE created_at >= date_trunc('month', CURRENT_TIMESTAMP AT TIME ZONE 'Asia/Kolkata')"
-            );
-            repairsThisMonth = parseInt(monthResult.rows[0].count) || 0;
-
-            // Chart Data: Should show realized cash (Advances + Balanced Collected + Sales) for each day
-            const chartInterval = period === 'MONTH' ? '30 days' : '7 days';
-            const chartResult = await query(`
-                WITH DailyStats AS (
-                    -- Daily Advances
-                    SELECT 
-                        (created_at AT TIME ZONE 'UTC' AT TIME ZONE 'Asia/Kolkata')::DATE as date,
-                        SUM(advance) as amount
-                    FROM repairs 
-                    WHERE (created_at AT TIME ZONE 'UTC' AT TIME ZONE 'Asia/Kolkata') >= (CURRENT_TIMESTAMP AT TIME ZONE 'Asia/Kolkata' - INTERVAL '${chartInterval}')
-                    GROUP BY 1
-                    
+            const statsResult = await query(`
+                WITH RECURSIVE Dates AS (
+                    SELECT (CURRENT_TIMESTAMP AT TIME ZONE 'Asia/Kolkata')::DATE - INTERVAL '${chartDays - 1} days' as d
                     UNION ALL
-                    
-                    -- Daily Collected Balances
-                    SELECT 
-                        (balance_collected_at AT TIME ZONE 'UTC' AT TIME ZONE 'Asia/Kolkata')::DATE as date,
-                        SUM(estimated_cost - advance) as amount
-                    FROM repairs 
-                    WHERE (balance_collected_at AT TIME ZONE 'UTC' AT TIME ZONE 'Asia/Kolkata') >= (CURRENT_TIMESTAMP AT TIME ZONE 'Asia/Kolkata' - INTERVAL '${chartInterval}')
-                    GROUP BY 1
-
-                    UNION ALL
-                    
-                    -- Daily Accessory/Store Sales
-                    SELECT 
-                        (created_at AT TIME ZONE 'UTC' AT TIME ZONE 'Asia/Kolkata')::DATE as date,
-                        SUM(total_price) as amount
-                    FROM sales 
-                    WHERE (created_at AT TIME ZONE 'UTC' AT TIME ZONE 'Asia/Kolkata') >= (CURRENT_TIMESTAMP AT TIME ZONE 'Asia/Kolkata' - INTERVAL '${chartInterval}')
-                    GROUP BY 1
+                    SELECT d + INTERVAL '1 day' FROM Dates WHERE d < (CURRENT_TIMESTAMP AT TIME ZONE 'Asia/Kolkata')::DATE
+                ),
+                DailyRevenue AS (
+                    SELECT date, SUM(amount) as amount FROM (
+                        SELECT (created_at AT TIME ZONE 'UTC' AT TIME ZONE 'Asia/Kolkata')::DATE as date, advance as amount FROM repairs
+                        UNION ALL
+                        SELECT (balance_collected_at AT TIME ZONE 'UTC' AT TIME ZONE 'Asia/Kolkata')::DATE as date, (estimated_cost - advance) as amount FROM repairs WHERE balance_collected_at IS NOT NULL
+                        UNION ALL
+                        SELECT (created_at AT TIME ZONE 'UTC' AT TIME ZONE 'Asia/Kolkata')::DATE as date, total_price as amount FROM sales
+                    ) s GROUP BY 1
+                ),
+                GlobalStats AS (
+                    SELECT
+                        -- Total Realized Revenue (All time)
+                        (SELECT COALESCE(SUM(advance), 0) FROM repairs) +
+                        (SELECT COALESCE(SUM(estimated_cost - advance), 0) FROM repairs WHERE balance_collected_at IS NOT NULL) +
+                        (SELECT COALESCE(SUM(total_price), 0) FROM sales) as total_revenue,
+                        
+                        -- Today's Revenue (IST)
+                        (SELECT COALESCE(SUM(amount), 0) FROM DailyRevenue WHERE date = (CURRENT_TIMESTAMP AT TIME ZONE 'Asia/Kolkata')::DATE) as today_revenue,
+                        
+                        -- Pending Collections
+                        (SELECT COALESCE(SUM(estimated_cost - advance), 0) FROM repairs WHERE status NOT IN ('DELIVERED', 'CANCELLED') AND balance_collected_at IS NULL) as pending_balance,
+                        
+                        -- Active Repairs
+                        (SELECT COUNT(*) FROM repairs WHERE status NOT IN ('DELIVERED', 'CANCELLED')) as active_repairs,
+                        
+                        -- Repairs this month
+                        (SELECT COUNT(*) FROM repairs WHERE created_at >= date_trunc('month', CURRENT_TIMESTAMP AT TIME ZONE 'Asia/Kolkata')) as repairs_this_month
                 )
                 SELECT 
-                    to_char(date, '${period === 'MONTH' ? 'DD Mon' : 'Dy'}') as name,
-                    COALESCE(SUM(amount), 0) as revenue
-                FROM DailyStats
-                GROUP BY date, name
-                ORDER BY date
-            `).catch(() => ({ rows: [] }));
-            chartData = chartResult.rows.map((r: any) => ({
-                name: r.name,
-                revenue: parseFloat(r.revenue) || 0
-            }));
+                    to_char(D.d, '${period === 'MONTH' ? 'DD Mon' : 'Dy'}') as name,
+                    COALESCE(R.amount, 0) as amount,
+                    D.d as raw_date,
+                    (SELECT total_revenue FROM GlobalStats) as total_revenue,
+                    (SELECT today_revenue FROM GlobalStats) as today_revenue,
+                    (SELECT pending_balance FROM GlobalStats) as pending_balance,
+                    (SELECT active_repairs FROM GlobalStats) as active_repairs,
+                    (SELECT repairs_this_month FROM GlobalStats) as repairs_this_month
+                FROM Dates D
+                LEFT JOIN DailyRevenue R ON D.d = R.date
+                ORDER BY D.d ASC
+            `);
+
+            if (statsResult.rows.length > 0) {
+                const global = statsResult.rows[0];
+                revenue = parseFloat(global.total_revenue) || 0;
+                todayRevenue = parseFloat(global.today_revenue) || 0;
+                pendingBalance = parseFloat(global.pending_balance) || 0;
+                activeRepairs = parseInt(global.active_repairs) || 0;
+                repairsThisMonth = parseInt(global.repairs_this_month) || 0;
+
+                chartData = statsResult.rows.map((r: any) => ({
+                    name: r.name,
+                    revenue: parseFloat(r.revenue) || 0
+                }));
+            }
 
         } catch (err: any) {
-            console.log('Stats query error:', err.message);
+            console.error('Stats query error:', err);
         }
 
         return NextResponse.json({
