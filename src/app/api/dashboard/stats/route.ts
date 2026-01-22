@@ -23,70 +23,92 @@ export async function GET(request: Request) {
         let chartData: any[] = [];
 
         try {
+            // Get all stats in one powerful query to avoid calculation mismatches
             const statsResult = await query(`
                 WITH RECURSIVE Dates AS (
+                    -- Generate the last 7 (or 30) days in IST
                     SELECT (CURRENT_TIMESTAMP AT TIME ZONE 'Asia/Kolkata')::DATE - INTERVAL '${chartDays - 1} days' as d
                     UNION ALL
                     SELECT d + INTERVAL '1 day' FROM Dates WHERE d < (CURRENT_TIMESTAMP AT TIME ZONE 'Asia/Kolkata')::DATE
                 ),
-                DailyRevenue AS (
-                    SELECT date, SUM(amount) as amount FROM (
-                        SELECT (created_at AT TIME ZONE 'UTC' AT TIME ZONE 'Asia/Kolkata')::DATE as date, advance as amount FROM repairs
-                        UNION ALL
-                        SELECT (balance_collected_at AT TIME ZONE 'UTC' AT TIME ZONE 'Asia/Kolkata')::DATE as date, (estimated_cost - advance) as amount FROM repairs WHERE balance_collected_at IS NOT NULL
-                        UNION ALL
-                        SELECT (created_at AT TIME ZONE 'UTC' AT TIME ZONE 'Asia/Kolkata')::DATE as date, total_price as amount FROM sales
-                    ) s GROUP BY 1
+                -- Helper to convert any timestamp to IST Date
+                RawData AS (
+                    SELECT 
+                        -- For repairs, we treat 'created_at' as the source for Advances
+                        (CASE 
+                            WHEN created_at IS NULL THEN NULL 
+                            ELSE (created_at AT TIME ZONE 'UTC' AT TIME ZONE 'Asia/Kolkata')::DATE 
+                        END) as advance_date,
+                        advance,
+                        -- For balance collections, we use the specific collection timestamp
+                        (CASE 
+                            WHEN balance_collected_at IS NULL THEN NULL 
+                            ELSE (balance_collected_at AT TIME ZONE 'UTC' AT TIME ZONE 'Asia/Kolkata')::DATE 
+                        END) as collection_date,
+                        (estimated_cost - advance) as balance_amount
+                    FROM repairs
                 ),
-                GlobalStats AS (
+                SalesData AS (
+                    SELECT 
+                        (created_at AT TIME ZONE 'UTC' AT TIME ZONE 'Asia/Kolkata')::DATE as sale_date,
+                        total_price
+                    FROM sales
+                ),
+                DailyRevenue AS (
+                    -- Combine all income streams into a single daily summary
+                    SELECT ist_date, SUM(amount) as amount FROM (
+                        SELECT advance_date as ist_date, advance as amount FROM RawData WHERE advance_date IS NOT NULL
+                        UNION ALL
+                        SELECT collection_date as ist_date, balance_amount as amount FROM RawData WHERE collection_date IS NOT NULL
+                        UNION ALL
+                        SELECT sale_date as ist_date, total_price as amount FROM SalesData WHERE sale_date IS NOT NULL
+                    ) t
+                    GROUP BY 1
+                ),
+                Summary AS (
                     SELECT
-                        -- Total Realized Revenue (All time)
-                        (SELECT COALESCE(SUM(advance), 0) FROM repairs) +
-                        (SELECT COALESCE(SUM(estimated_cost - advance), 0) FROM repairs WHERE balance_collected_at IS NOT NULL) +
-                        (SELECT COALESCE(SUM(total_price), 0) FROM sales) as total_revenue,
+                        -- Global Totals
+                        (SELECT COALESCE(SUM(amount), 0) FROM DailyRevenue) as total_revenue,
                         
                         -- Today's Revenue (IST)
-                        (SELECT COALESCE(SUM(amount), 0) FROM DailyRevenue WHERE date = (CURRENT_TIMESTAMP AT TIME ZONE 'Asia/Kolkata')::DATE) as today_revenue,
+                        (SELECT COALESCE(SUM(amount), 0) FROM DailyRevenue WHERE ist_date = (CURRENT_TIMESTAMP AT TIME ZONE 'Asia/Kolkata')::DATE) as today_revenue,
                         
-                        -- Pending Collections
+                        -- Real-time Operational Stats
                         (SELECT COALESCE(SUM(estimated_cost - advance), 0) FROM repairs WHERE status NOT IN ('DELIVERED', 'CANCELLED') AND balance_collected_at IS NULL) as pending_balance,
-                        
-                        -- Active Repairs
                         (SELECT COUNT(*) FROM repairs WHERE status NOT IN ('DELIVERED', 'CANCELLED')) as active_repairs,
-                        
-                        -- Repairs this month
-                        (SELECT COUNT(*) FROM repairs WHERE created_at >= date_trunc('month', CURRENT_TIMESTAMP AT TIME ZONE 'Asia/Kolkata')) as repairs_this_month
+                        (SELECT COUNT(*) FROM repairs WHERE (created_at AT TIME ZONE 'UTC' AT TIME ZONE 'Asia/Kolkata')::DATE >= date_trunc('month', CURRENT_TIMESTAMP AT TIME ZONE 'Asia/Kolkata')::DATE) as monthly_count
                 )
+                -- Final output: Continuous chart data + summary stats attached to the first row
                 SELECT 
-                    to_char(D.d, '${period === 'MONTH' ? 'DD Mon' : 'Dy'}') as name,
+                    to_char(D.d, '${period === 'MONTH' ? 'DD' : 'Dy'}') as label,
                     COALESCE(R.amount, 0) as amount,
-                    D.d as raw_date,
-                    (SELECT total_revenue FROM GlobalStats) as total_revenue,
-                    (SELECT today_revenue FROM GlobalStats) as today_revenue,
-                    (SELECT pending_balance FROM GlobalStats) as pending_balance,
-                    (SELECT active_repairs FROM GlobalStats) as active_repairs,
-                    (SELECT repairs_this_month FROM GlobalStats) as repairs_this_month
+                    D.d::DATE as ist_date,
+                    (SELECT total_revenue FROM Summary) as total_rev,
+                    (SELECT today_revenue FROM Summary) as today_rev,
+                    (SELECT pending_balance FROM Summary) as pending_bal,
+                    (SELECT active_repairs FROM Summary) as active_count,
+                    (SELECT monthly_count FROM Summary) as month_count
                 FROM Dates D
-                LEFT JOIN DailyRevenue R ON D.d = R.date
+                LEFT JOIN DailyRevenue R ON D.d::DATE = R.ist_date
                 ORDER BY D.d ASC
             `);
 
             if (statsResult.rows.length > 0) {
                 const global = statsResult.rows[0];
-                revenue = parseFloat(global.total_revenue) || 0;
-                todayRevenue = parseFloat(global.today_revenue) || 0;
-                pendingBalance = parseFloat(global.pending_balance) || 0;
-                activeRepairs = parseInt(global.active_repairs) || 0;
-                repairsThisMonth = parseInt(global.repairs_this_month) || 0;
+                revenue = parseFloat(global.total_rev) || 0;
+                todayRevenue = parseFloat(global.today_rev) || 0;
+                pendingBalance = parseFloat(global.pending_bal) || 0;
+                activeRepairs = parseInt(global.active_count) || 0;
+                repairsThisMonth = parseInt(global.month_count) || 0;
 
                 chartData = statsResult.rows.map((r: any) => ({
-                    name: r.name,
-                    revenue: parseFloat(r.revenue) || 0
+                    name: r.label,
+                    revenue: parseFloat(r.amount) || 0
                 }));
             }
 
         } catch (err: any) {
-            console.error('Stats query error:', err);
+            console.error('Stats query logic error:', err);
         }
 
         return NextResponse.json({
@@ -99,7 +121,7 @@ export async function GET(request: Request) {
         });
 
     } catch (err: any) {
-        console.error('Dashboard stats error:', err);
+        console.error('API outer error:', err);
         return NextResponse.json({ error: err.message }, { status: 500 });
     }
 }
