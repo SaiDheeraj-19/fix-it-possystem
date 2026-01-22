@@ -73,23 +73,30 @@ export async function POST(request: Request) {
         }
 
         // Insert Repair
-        const repairResult = await query(
-            `INSERT INTO repairs 
-       (customer_name, customer_phone, device_brand, device_model, problem, imei, 
-        estimated_cost, advance, warranty,
-        pin_encrypted, pin_iv, pattern_encrypted, pattern_iv, password_encrypted, password_iv,
-        images, created_by)
-       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17)
-       RETURNING id`,
-            [
-                customerName, customerMobile, deviceBrand, deviceModel, problem, imei || null,
-                estimatedCost || 0, advance || 0, warrantyDays || '', // map form's warrantyDays to warranty column
-                pinEncrypted, pinIv, patternEncrypted, patternIv, passwordEncrypted, passwordIv,
-                JSON.stringify(images || []), session.id
-            ]
-        );
+        let repairId;
+        try {
+            const repairResult = await query(
+                `INSERT INTO repairs 
+           (customer_name, customer_phone, device_brand, device_model, problem, imei, 
+            estimated_cost, advance, warranty,
+            pin_encrypted, pin_iv, pattern_encrypted, pattern_iv, password_encrypted, password_iv,
+            images, created_by)
+           VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17)
+           RETURNING id`,
+                [
+                    customerName, customerMobile, deviceBrand, deviceModel, problem, imei || null,
+                    estimatedCost || 0, advance || 0, warrantyDays || '',
+                    pinEncrypted, pinIv, patternEncrypted, patternIv, passwordEncrypted, passwordIv,
+                    JSON.stringify(images || []), session.id
+                ]
+            );
+            repairId = repairResult.rows[0].id;
+        } catch (dbErr: any) {
+            console.error('Database Insert Error (Repairs):', dbErr);
+            throw new Error(`Database Error: ${dbErr.message}`);
+        }
 
-        return NextResponse.json({ success: true, repairId: repairResult.rows[0].id });
+        return NextResponse.json({ success: true, repairId: repairId });
 
     } catch (e: any) {
         console.error('Create Repair Error:', e);
