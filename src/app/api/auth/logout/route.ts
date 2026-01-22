@@ -10,11 +10,11 @@ export async function POST() {
     }
 }
 
-export async function GET() {
+export async function GET(request: Request) {
     try {
         cookies().delete('session_token');
-        // Redirect to login page
-        return NextResponse.redirect(new URL('/', 'http://localhost:3000'));
+        const url = new URL('/', request.url);
+        return NextResponse.redirect(url);
     } catch (err) {
         return NextResponse.json({ error: 'Logout failed' }, { status: 500 });
     }

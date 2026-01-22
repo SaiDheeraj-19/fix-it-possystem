@@ -274,7 +274,7 @@ export default function UsersPage() {
                                     <div className="flex flex-col">
                                         <span className="text-[10px] text-gray-500 uppercase font-bold tracking-wider">Access Password</span>
                                         <span className="font-mono text-sm text-blue-400">
-                                            {showPasswords[user.id] ? (user.password_plain || '••••••••') : '••••••••'}
+                                            {showPasswords[user.id] ? (user.password_plain || 'Reset to View') : '••••••••'}
                                         </span>
                                     </div>
                                     <button
