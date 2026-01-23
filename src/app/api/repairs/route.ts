@@ -69,9 +69,49 @@ export async function POST(request: Request) {
     }
 }
 
-export async function GET() {
+export async function GET(request: Request) {
     try {
-        const result = await query('SELECT * FROM repairs ORDER BY created_at DESC LIMIT 50');
+        const { searchParams } = new URL(request.url);
+        const limit = parseInt(searchParams.get('limit') || '50');
+        const status = searchParams.get('status');
+        const search = searchParams.get('search');
+
+        let queryText = `
+            SELECT 
+                id, 
+                customer_name, 
+                customer_phone, 
+                device_brand, 
+                device_model, 
+                estimated_cost, 
+                advance, 
+                status, 
+                created_at 
+            FROM repairs
+            WHERE 1=1
+        `;
+        const queryParams: any[] = [];
+
+        if (status && status !== 'ALL') {
+            queryParams.push(status);
+            queryText += ` AND status = $${queryParams.length}`;
+        }
+
+        if (search) {
+            queryParams.push(`%${search}%`);
+            queryText += ` AND (
+                customer_name ILIKE $${queryParams.length} OR 
+                customer_phone ILIKE $${queryParams.length} OR 
+                device_model ILIKE $${queryParams.length} OR
+                id::text ILIKE $${queryParams.length}
+            )`;
+        }
+
+        queryText += ` ORDER BY created_at DESC LIMIT $${queryParams.length + 1}`;
+        queryParams.push(limit);
+
+        const result = await query(queryText, queryParams);
+
         return NextResponse.json({ repairs: result.rows });
     } catch (e: any) {
         console.error('Get Repairs Error:', e);

@@ -4,10 +4,12 @@ import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { Plus, Search, Truck, ShoppingCart, Smartphone, FileText } from 'lucide-react';
 import { motion } from 'framer-motion';
+import { useRouter } from 'next/navigation';
 
 import { LiveClock } from '@/components/dashboard/LiveClock';
 
 export function StaffDashboard() {
+    const router = useRouter();
     const [activeCount, setActiveCount] = useState(0);
     const [repairs, setRepairs] = useState<any[]>([]);
     const [loading, setLoading] = useState(true);
@@ -20,10 +22,10 @@ export function StaffDashboard() {
             .catch(() => setActiveCount(0));
 
         // Fetch recent repairs
-        fetch('/api/repairs')
+        fetch('/api/repairs?limit=5')
             .then(res => res.json())
             .then(data => {
-                setRepairs(data.repairs?.slice(0, 5) || []);
+                setRepairs(data.repairs || []);
                 setLoading(false);
             })
             .catch(() => {
@@ -71,7 +73,7 @@ export function StaffDashboard() {
                     onKeyDown={(e) => {
                         if (e.key === 'Enter') {
                             const val = (e.target as HTMLInputElement).value;
-                            if (val) window.location.href = `/repairs?search=${val}`;
+                            if (val) router.push(`/repairs?search=${val}`);
                         }
                     }}
                 />

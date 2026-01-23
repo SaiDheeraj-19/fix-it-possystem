@@ -2,7 +2,7 @@
 
 import React, { useState, useRef, useEffect } from "react";
 import { cn } from "@/lib/utils";
-import { Lock, Key, Grid3X3, Smartphone } from "lucide-react";
+import { Lock, Key, Grid3X3, Smartphone, RotateCcw } from "lucide-react";
 
 interface SecurityLockInputsProps {
     onChange?: (value: string, mode: "PATTERN" | "PIN" | "PASSWORD" | "NONE") => void;
@@ -29,6 +29,8 @@ export const SecurityLockInputs: React.FC<SecurityLockInputsProps> = ({
     const [patternPath, setPatternPath] = useState<number[]>(
         initialMode === "PATTERN" ? parsePattern(initialValue) : []
     );
+    // Cursor position for rubber-band line
+    const [cursorPos, setCursorPos] = useState<{ x: number, y: number } | null>(null);
 
     const svgRef = useRef<SVGSVGElement>(null);
     const containerRef = useRef<HTMLDivElement>(null);
@@ -40,7 +42,10 @@ export const SecurityLockInputs: React.FC<SecurityLockInputsProps> = ({
 
     useEffect(() => {
         if (initialValue) {
-            if (initialMode === "PATTERN") setPatternPath(parsePattern(initialValue));
+            if (initialMode === "PATTERN") {
+                setPatternPath(parsePattern(initialValue));
+                setCursorPos(null);
+            }
             else if (initialMode === "PIN") setPin(initialValue);
             else if (initialMode === "PASSWORD") setPassword(initialValue);
         }
@@ -58,6 +63,7 @@ export const SecurityLockInputs: React.FC<SecurityLockInputsProps> = ({
     const getCoordinates = (index: number) => {
         const row = Math.floor(index / 3);
         const col = index % 3;
+        // 240x240 box => 80px per cell. Center is at 40.
         return { x: col * 80 + 40, y: row * 80 + 40 };
     };
 
@@ -65,6 +71,24 @@ export const SecurityLockInputs: React.FC<SecurityLockInputsProps> = ({
         if (readOnly) return;
         setIsDrawing(true);
         setPatternPath([index]);
+        setCursorPos(getCoordinates(index));
+    };
+
+    const calculateIntermediate = (start: number, end: number): number | null => {
+        const row1 = Math.floor(start / 3);
+        const col1 = start % 3;
+        const row2 = Math.floor(end / 3);
+        const col2 = end % 3;
+
+        // Check if diagonal, vertical, or horizontal line
+        // Midpoint logic: if diff is even, there is a midpoint
+        if (Math.abs(row1 - row2) % 2 === 0 && Math.abs(col1 - col2) % 2 === 0) {
+            const midRow = (row1 + row2) / 2;
+            const midCol = (col1 + col2) / 2;
+            // Ensure midRow/midCol are integers (they should be if diff is even)
+            return midRow * 3 + midCol;
+        }
+        return null;
     };
 
     const handlePointerMove = (e: React.PointerEvent) => {
@@ -73,35 +97,69 @@ export const SecurityLockInputs: React.FC<SecurityLockInputsProps> = ({
         const rect = containerRef.current.getBoundingClientRect();
         const x = e.clientX - rect.left;
         const y = e.clientY - rect.top;
+        setCursorPos({ x, y });
 
-        // Find which dot is near (80x80 grid)
-        const col = Math.floor(x / 80);
-        const row = Math.floor(y / 80);
-
-        if (col >= 0 && col < 3 && row >= 0 && row < 3) {
-            const index = row * 3 + col;
-
-            // Check if pointer is close enough to the center of the dot (within 30px)
-            const dotCenter = getCoordinates(index);
+        // Check distance to all dots
+        for (let i = 0; i < 9; i++) {
+            const dotCenter = getCoordinates(i);
             const dist = Math.sqrt(Math.pow(x - dotCenter.x, 2) + Math.pow(y - dotCenter.y, 2));
 
-            if (dist < 30 && !patternPath.includes(index)) {
-                setPatternPath((prev) => [...prev, index]);
+            if (dist < 35) {
+                if (!patternPath.includes(i)) {
+                    // ADD NEW NODE
+                    setPatternPath((prev) => {
+                        const lastDot = prev[prev.length - 1];
+                        if (lastDot !== undefined) {
+                            const intermediate = calculateIntermediate(lastDot, i);
+                            // If intermediate exists and is not already selected, add it first
+                            if (intermediate !== null && !prev.includes(intermediate)) {
+                                return [...prev, intermediate, i];
+                            }
+                        }
+                        return [...prev, i];
+                    });
+                } else {
+                    // BACKTRACK / UNDO Logic
+                    // Allow moving back to the previous node to "undo" the last segment
+                    setPatternPath((prev) => {
+                        if (prev.length > 1) {
+                            const prevNode = prev[prev.length - 2];
+                            if (i === prevNode) {
+                                // We retraced to the previous node, so pop the last one
+                                return prev.slice(0, -1);
+                            }
+                        }
+                        return prev;
+                    });
+                }
             }
         }
+    };
+
+    const handlePatternReset = () => {
+        if (readOnly) return;
+        setPatternPath([]);
+        setCursorPos(null);
+        if (onChange) onChange("", "PATTERN");
     };
 
     useEffect(() => {
         const handleUp = () => {
             if (isDrawing) {
                 setIsDrawing(false);
+                setCursorPos(null);
                 if (onChange) onChange(patternPath.join("-"), "PATTERN");
             }
         };
         window.addEventListener("pointerup", handleUp);
-        return () => window.removeEventListener("pointerup", handleUp);
+        window.addEventListener("touchend", handleUp);
+        return () => {
+            window.removeEventListener("pointerup", handleUp);
+            window.removeEventListener("touchend", handleUp);
+        };
     }, [isDrawing, patternPath, onChange]);
 
+    // ... PIN and Password Handlers ...
     const handlePinClick = (digit: string) => {
         if (readOnly) return;
         if (pin.length < 8) {
@@ -130,7 +188,7 @@ export const SecurityLockInputs: React.FC<SecurityLockInputsProps> = ({
             "w-full max-w-sm mx-auto rounded-[3rem] p-4 shadow-2xl relative overflow-hidden transition-all",
             readOnly ? "bg-transparent border-0 shadow-none pointer-events-none" : "bg-black border-[8px] border-gray-800"
         )}>
-            {/* Mobile Frame Header (Notch style) */}
+            {/* Mobile Frame Header */}
             {!readOnly && (
                 <div className="absolute top-0 left-1/2 -translate-x-1/2 w-32 h-6 bg-gray-800 rounded-b-xl z-20"></div>
             )}
@@ -158,69 +216,122 @@ export const SecurityLockInputs: React.FC<SecurityLockInputsProps> = ({
                 readOnly ? "bg-transparent" : "bg-gray-950 rounded-2xl border border-gray-800"
             )}>
                 {mode === "PATTERN" ? (
-                    <div
-                        ref={containerRef}
-                        onPointerMove={handlePointerMove}
-                        className="relative w-[240px] h-[240px] touch-none select-none"
-                    >
-                        {/* Background Grid Dots */}
-                        <div className="absolute inset-0 grid grid-cols-3 grid-rows-3">
-                            {DOTS.map(dot => (
-                                <div key={dot} className="flex items-center justify-center">
-                                    <div className="w-2 h-2 bg-gray-600 rounded-full opacity-50"></div>
-                                </div>
-                            ))}
-                        </div>
-
-                        <svg ref={svgRef} className="absolute inset-0 w-full h-full pointer-events-none z-20 overflow-visible">
-                            {/* Glow Filter */}
-                            <defs>
-                                <filter id="glow" x="-50%" y="-50%" width="200%" height="200%">
-                                    <feGaussianBlur stdDeviation="4" result="coloredBlur" />
-                                    <feMerge>
-                                        <feMergeNode in="coloredBlur" />
-                                        <feMergeNode in="SourceGraphic" />
-                                    </feMerge>
-                                </filter>
-                            </defs>
-
-                            {patternPath.length > 0 && (
-                                <polyline
-                                    points={patternPath.map((i) => {
-                                        const { x, y } = getCoordinates(i);
-                                        return `${x},${y}`;
-                                    }).join(" ")}
-                                    fill="none"
-                                    stroke={readOnly ? "#4ade80" : "#3b82f6"}
-                                    strokeWidth="6"
-                                    strokeLinecap="round"
-                                    strokeLinejoin="round"
-                                    filter="url(#glow)"
-                                    className="opacity-90"
-                                />
-                            )}
-                        </svg>
-                        <div className="grid grid-cols-3 gap-0 w-full h-full relative z-30">
-                            {DOTS.map((dot) => {
-                                const isActive = patternPath.includes(dot);
-                                return (
-                                    <div
-                                        key={dot}
-                                        className="flex items-center justify-center cursor-pointer"
-                                        onPointerDown={() => handlePointerDown(dot)}
-                                    >
-                                        <div className={cn(
-                                            "transition-all duration-300 rounded-full border-2",
-                                            isActive
-                                                ? (readOnly ? "w-4 h-4 bg-green-400 border-green-200 shadow-[0_0_15px_#4ade80]" : "w-4 h-4 bg-blue-500 border-blue-200 shadow-[0_0_15px_#3b82f6]")
-                                                : "w-2 h-2 bg-gray-500 border-transparent hover:w-4 hover:h-4 hover:border-gray-400"
-                                        )} />
+                    <>
+                        <div
+                            ref={containerRef}
+                            onPointerMove={handlePointerMove}
+                            onTouchMove={(e) => {
+                                // prevent scrolling
+                            }}
+                            className="relative w-[240px] h-[240px] touch-none select-none"
+                        >
+                            {/* Background Grid Dots */}
+                            <div className="absolute inset-0 grid grid-cols-3 grid-rows-3 pointer-events-none">
+                                {DOTS.map(dot => (
+                                    <div key={dot} className="flex items-center justify-center">
+                                        <div className="w-2 h-2 bg-gray-600 rounded-full opacity-50"></div>
                                     </div>
-                                );
-                            })}
+                                ))}
+                            </div>
+
+                            <svg ref={svgRef} className="absolute inset-0 w-full h-full pointer-events-none z-20 overflow-visible">
+                                <defs>
+                                    <filter id="glow" x="-50%" y="-50%" width="200%" height="200%">
+                                        <feGaussianBlur stdDeviation="4" result="coloredBlur" />
+                                        <feMerge>
+                                            <feMergeNode in="coloredBlur" />
+                                            <feMergeNode in="SourceGraphic" />
+                                        </feMerge>
+                                    </filter>
+                                </defs>
+
+                                {/* Existing Path */}
+                                {patternPath.length > 0 && (
+                                    <polyline
+                                        points={patternPath.map((i) => {
+                                            const { x, y } = getCoordinates(i);
+                                            return `${x},${y}`;
+                                        }).join(" ")}
+                                        fill="none"
+                                        stroke={readOnly ? "#4ade80" : "#3b82f6"}
+                                        strokeWidth="6"
+                                        strokeLinecap="round"
+                                        strokeLinejoin="round"
+                                        filter="url(#glow)"
+                                        className="opacity-90 transition-all duration-75"
+                                    />
+                                )}
+
+                                {/* Rubber Band Line (Current Cursor) */}
+                                {isDrawing && cursorPos && patternPath.length > 0 && (
+                                    <line
+                                        x1={getCoordinates(patternPath[patternPath.length - 1]).x}
+                                        y1={getCoordinates(patternPath[patternPath.length - 1]).y}
+                                        x2={cursorPos.x}
+                                        y2={cursorPos.y}
+                                        stroke="#3b82f6"
+                                        strokeWidth="6"
+                                        strokeLinecap="round"
+                                        strokeOpacity="0.5"
+                                    />
+                                )}
+                            </svg>
+
+                            {/* Interactive Dots */}
+                            <div className="grid grid-cols-3 gap-0 w-full h-full relative z-30">
+                                {DOTS.map((dot) => {
+                                    const isActive = patternPath.includes(dot);
+                                    return (
+                                        <div
+                                            key={dot}
+                                            className="flex items-center justify-center cursor-pointer w-full h-full touch-action-none"
+                                            onPointerDown={(e) => {
+                                                e.preventDefault();
+                                                handlePointerDown(dot);
+                                            }}
+                                            onPointerEnter={() => {
+                                                if (isDrawing && !patternPath.includes(dot)) {
+                                                    // Check for intermediate on enter as well just in case
+                                                    setPatternPath((prev) => {
+                                                        const lastDot = prev[prev.length - 1];
+                                                        if (lastDot !== undefined) {
+                                                            const intermediate = calculateIntermediate(lastDot, dot);
+                                                            if (intermediate !== null && !prev.includes(intermediate)) {
+                                                                return [...prev, intermediate, dot];
+                                                            }
+                                                        }
+                                                        return [...prev, dot];
+                                                    });
+                                                }
+                                            }}
+                                        >
+                                            <div className={cn(
+                                                "transition-all duration-300 rounded-full border-2",
+                                                isActive
+                                                    ? (readOnly ? "w-4 h-4 bg-green-400 border-green-200 shadow-[0_0_15px_#4ade80]" : "w-4 h-4 bg-blue-500 border-blue-200 shadow-[0_0_15px_#3b82f6]")
+                                                    : "w-2 h-2 bg-gray-500 border-transparent hover:w-4 hover:h-4 hover:border-gray-400 group-hover:scale-150"
+                                            )} />
+                                        </div>
+                                    );
+                                })}
+                            </div>
                         </div>
-                    </div>
+
+                        {!readOnly && patternPath.length > 0 && (
+                            <div className="absolute bottom-6 w-full flex justify-center z-50 pointer-events-auto">
+                                <button
+                                    type="button"
+                                    onClick={handlePatternReset}
+                                    className="flex items-center gap-2 px-4 py-2 rounded-full bg-gray-800/90 border border-gray-700 text-gray-400 hover:text-red-400 hover:border-red-500/50 hover:bg-red-500/10 transition-all text-xs font-medium backdrop-blur-md shadow-xl active:scale-95"
+                                >
+                                    <RotateCcw className="w-3 h-3" />
+                                    Reset Pattern
+                                </button>
+                            </div>
+                        )}
+                    </>
                 ) : mode === "PIN" ? (
+                    // ... PIN UI ...
                     <div className="w-full h-full flex flex-col items-center justify-end pb-12">
                         <div className="mb-12 w-full flex justify-center space-x-4 h-4">
                             {Array.from({ length: Math.max(4, pin.length) }).map((_, i) => (
