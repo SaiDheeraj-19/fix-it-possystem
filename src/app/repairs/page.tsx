@@ -8,7 +8,6 @@ import {
     CheckCircle2, Clock, Truck, XCircle,
     ChevronRight, ArrowUpRight, LayoutGrid
 } from 'lucide-react';
-import { motion, AnimatePresence } from 'framer-motion';
 
 // --- Types ---
 interface Repair {
@@ -24,7 +23,6 @@ interface Repair {
 }
 
 const TABS = [
-    { id: 'ALL', label: 'All Orders', icon: LayoutGrid },
     { id: 'NEW', label: 'New', icon: Plus },
     { id: 'PENDING', label: 'Pending', icon: Clock },
     { id: 'REPAIRED', label: 'Completed', icon: CheckCircle2 },
@@ -136,16 +134,9 @@ function RepairsContent() {
                                     <button
                                         key={tab.id}
                                         onClick={() => setActiveTab(tab.id)}
-                                        className={`relative px-4 py-2.5 rounded-xl flex items-center gap-2 transition-all duration-300 shrink-0 ${isActive ? 'text-white' : 'text-gray-500 hover:text-gray-300'
+                                        className={`relative px-4 py-2.5 rounded-xl flex items-center gap-2 transition-all duration-300 shrink-0 ${isActive ? 'text-white bg-gray-800' : 'text-gray-500 hover:text-gray-300'
                                             }`}
                                     >
-                                        {isActive && (
-                                            <motion.div
-                                                layoutId="activeTab"
-                                                className="absolute inset-0 bg-gray-800 rounded-xl"
-                                                transition={{ type: "spring", bounce: 0.2, duration: 0.6 }}
-                                            />
-                                        )}
                                         <span className="relative z-10 flex items-center gap-2 text-sm font-semibold">
                                             <Icon className={`w-4 h-4 ${isActive ? 'text-blue-400' : ''}`} />
                                             {tab.label}
@@ -180,10 +171,8 @@ function RepairsContent() {
                             ))}
                         </div>
                     ) : repairs.length > 0 ? (
-                        <motion.div
-                            initial={{ opacity: 0 }}
-                            animate={{ opacity: 1 }}
-                            className="grid gap-4"
+                        <div
+                            className="grid gap-4 animate-in fade-in slide-in-from-bottom-4 duration-500"
                         >
                             {repairs.map((repair) => {
                                 const style = getStatusStyle(repair.status);
@@ -191,12 +180,8 @@ function RepairsContent() {
 
                                 return (
                                     <Link key={repair.id} href={`/repairs/${repair.id}`}>
-                                        <motion.div
-                                            layout
-                                            initial={{ scale: 0.98, opacity: 0 }}
-                                            animate={{ scale: 1, opacity: 1 }}
-                                            whileHover={{ scale: 1.01, backgroundColor: 'rgba(255,255,255,0.03)' }}
-                                            className="group relative bg-gray-900/30 border border-gray-800 rounded-2xl p-5 transition-all hover:border-gray-700 hover:shadow-2xl hover:shadow-blue-900/10"
+                                        <div
+                                            className="group relative bg-gray-900/30 border border-gray-800 rounded-2xl p-5 transition-all hover:border-gray-700 hover:shadow-2xl hover:shadow-blue-900/10 hover:scale-[1.01] hover:bg-white/5"
                                         >
                                             <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
 
@@ -248,11 +233,11 @@ function RepairsContent() {
                                                 </div>
 
                                             </div>
-                                        </motion.div>
+                                        </div>
                                     </Link>
                                 );
                             })}
-                        </motion.div>
+                        </div>
                     ) : (
                         <div className="flex flex-col items-center justify-center py-32 text-center opacity-0 animate-[fadeIn_0.5s_ease-out_forwards]">
                             <div className="w-24 h-24 bg-gray-900 rounded-full flex items-center justify-center mb-6 relative">

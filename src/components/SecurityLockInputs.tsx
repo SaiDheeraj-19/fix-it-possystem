@@ -2,7 +2,7 @@
 
 import React, { useState, useRef, useEffect } from "react";
 import { cn } from "@/lib/utils";
-import { Lock, Key, Grid3X3, Smartphone, RotateCcw } from "lucide-react";
+import { Lock, Key, Grid3X3, Smartphone, RotateCcw, Play } from "lucide-react";
 
 interface SecurityLockInputsProps {
     onChange?: (value: string, mode: "PATTERN" | "PIN" | "PASSWORD" | "NONE") => void;
@@ -36,6 +36,43 @@ export const SecurityLockInputs: React.FC<SecurityLockInputsProps> = ({
     const svgRef = useRef<SVGSVGElement>(null);
     const containerRef = useRef<HTMLDivElement>(null);
     const [isDrawing, setIsDrawing] = useState(false);
+
+    // Replay Logic
+    const [isReplaying, setIsReplaying] = useState(false);
+    const [replayIndex, setReplayIndex] = useState<number | null>(null);
+
+    // Auto-replay on mount for readOnly pattern
+    useEffect(() => {
+        if (readOnly && initialMode === "PATTERN" && parsePattern(initialValue).length > 0) {
+            const timer = setTimeout(() => {
+                handleReplay();
+            }, 500);
+            return () => clearTimeout(timer);
+        }
+    }, [readOnly, initialMode, initialValue]);
+
+    const handleReplay = () => {
+        if (patternPath.length === 0) return;
+        setIsReplaying(true);
+        setReplayIndex(0);
+    };
+
+    useEffect(() => {
+        if (isReplaying && replayIndex !== null) {
+            if (replayIndex < patternPath.length - 1) {
+                const timer = setTimeout(() => {
+                    setReplayIndex(prev => (prev === null ? null : prev + 1));
+                }, 400);
+                return () => clearTimeout(timer);
+            } else {
+                const timer = setTimeout(() => {
+                    setIsReplaying(false);
+                    setReplayIndex(null);
+                }, 1000);
+                return () => clearTimeout(timer);
+            }
+        }
+    }, [isReplaying, replayIndex, patternPath.length]);
 
     useEffect(() => {
         if (initialMode) setMode(initialMode);
@@ -186,6 +223,10 @@ export const SecurityLockInputs: React.FC<SecurityLockInputsProps> = ({
         if (onChange) onChange(newPassword, "PASSWORD");
     };
 
+    const displayPath = (isReplaying && replayIndex !== null)
+        ? patternPath.slice(0, replayIndex + 1)
+        : patternPath;
+
     return (
         <div className={cn(
             "w-full max-w-sm mx-auto rounded-[3rem] p-4 shadow-2xl relative overflow-hidden transition-all",
@@ -249,9 +290,9 @@ export const SecurityLockInputs: React.FC<SecurityLockInputsProps> = ({
                                 </defs>
 
                                 {/* Existing Path */}
-                                {patternPath.length > 0 && (
+                                {displayPath.length > 0 && (
                                     <polyline
-                                        points={patternPath.map((i) => {
+                                        points={displayPath.map((i) => {
                                             const { x, y } = getCoordinates(i);
                                             return `${x},${y}`;
                                         }).join(" ")}
@@ -261,7 +302,7 @@ export const SecurityLockInputs: React.FC<SecurityLockInputsProps> = ({
                                         strokeLinecap="round"
                                         strokeLinejoin="round"
                                         filter="url(#glow)"
-                                        className="opacity-90 transition-all duration-75"
+                                        className="opacity-90 transition-all duration-300"
                                     />
                                 )}
 
@@ -282,10 +323,9 @@ export const SecurityLockInputs: React.FC<SecurityLockInputsProps> = ({
                                 )}
                             </svg>
 
-                            {/* Interactive Dots */}
                             <div className="grid grid-cols-3 gap-0 w-full h-full relative z-30">
                                 {DOTS.map((dot) => {
-                                    const isActive = patternPath.includes(dot);
+                                    const isActive = displayPath.includes(dot);
                                     return (
                                         <div
                                             key={dot}
@@ -331,6 +371,19 @@ export const SecurityLockInputs: React.FC<SecurityLockInputsProps> = ({
                                 >
                                     <RotateCcw className="w-3 h-3" />
                                     Reset Pattern
+                                </button>
+                            </div>
+                        )}
+
+                        {readOnly && patternPath.length > 0 && (
+                            <div className="absolute bottom-6 w-full flex justify-center z-50 pointer-events-auto">
+                                <button
+                                    type="button"
+                                    onClick={handleReplay}
+                                    className="flex items-center gap-2 px-4 py-2 rounded-full bg-gray-800/90 border border-gray-700 text-blue-400 hover:text-white hover:border-blue-500/50 hover:bg-blue-500/10 transition-all text-xs font-medium backdrop-blur-md shadow-xl active:scale-95 pointer-events-auto"
+                                >
+                                    <Play className="w-3 h-3 fill-current" />
+                                    Replay Pattern
                                 </button>
                             </div>
                         )}

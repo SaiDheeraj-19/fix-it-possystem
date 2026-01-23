@@ -3,7 +3,6 @@
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { Plus, Search, Truck, ShoppingCart, Smartphone, FileText } from 'lucide-react';
-import { motion } from 'framer-motion';
 import { useRouter } from 'next/navigation';
 
 import { LiveClock } from '@/components/dashboard/LiveClock';
@@ -33,21 +32,6 @@ export function StaffDashboard() {
                 setLoading(false);
             });
     }, []);
-
-    const container = {
-        hidden: { opacity: 0 },
-        show: {
-            opacity: 1,
-            transition: {
-                staggerChildren: 0.1
-            }
-        }
-    };
-
-    const item = {
-        hidden: { y: 20, opacity: 0 },
-        show: { y: 0, opacity: 1 }
-    };
 
     const getStatusColor = (s: string) => {
         switch (s) {
@@ -80,13 +64,8 @@ export function StaffDashboard() {
             </div>
 
             {/* Actions Grid */}
-            <motion.div
-                variants={container}
-                initial="hidden"
-                animate="show"
-                className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6"
-            >
-                <motion.div variants={item}>
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
+                <div>
                     <Link href="/repairs/new" className="block group">
                         <div className="h-40 bg-gradient-to-br from-blue-600 to-blue-800 rounded-2xl p-6 relative overflow-hidden transition-transform hover:scale-[1.02]">
                             <Plus className="w-12 h-12 text-white/20 absolute -right-2 -bottom-2 group-hover:scale-150 transition-transform duration-500" />
@@ -95,9 +74,9 @@ export function StaffDashboard() {
                             <p className="text-blue-100 text-sm">Create job card & capture pattern</p>
                         </div>
                     </Link>
-                </motion.div>
+                </div>
 
-                <motion.div variants={item}>
+                <div>
                     <Link href="/repairs" className="block group">
                         <div className="h-40 bg-gray-600 bg-opacity-30 backdrop-blur-md border border-gray-700 rounded-2xl p-6 relative overflow-hidden hover:border-blue-500 transition-colors">
                             <Search className="w-12 h-12 text-white/10 absolute -right-2 -bottom-2" />
@@ -113,9 +92,9 @@ export function StaffDashboard() {
                             <p className="text-gray-400 text-sm">Update status & track delivery</p>
                         </div>
                     </Link>
-                </motion.div>
+                </div>
 
-                <motion.div variants={item}>
+                <div>
                     <Link href="/dashboard/sales" className="block group">
                         <div className="h-40 bg-gray-600 bg-opacity-30 backdrop-blur-md border border-gray-700 rounded-2xl p-6 relative overflow-hidden hover:border-green-500 transition-colors">
                             <ShoppingCart className="w-12 h-12 text-white/10 absolute -right-2 -bottom-2" />
@@ -124,9 +103,9 @@ export function StaffDashboard() {
                             <p className="text-gray-400 text-sm">Sell accessories & track revenue</p>
                         </div>
                     </Link>
-                </motion.div>
+                </div>
 
-                <motion.div variants={item}>
+                <div>
                     <Link href="/invoices" className="block group">
                         <div className="h-40 bg-gray-600 bg-opacity-30 backdrop-blur-md border border-gray-700 rounded-2xl p-6 relative overflow-hidden hover:border-purple-500 transition-colors">
                             <FileText className="w-12 h-12 text-white/10 absolute -right-2 -bottom-2" />
@@ -135,11 +114,11 @@ export function StaffDashboard() {
                             <p className="text-gray-400 text-sm">View and print past invoices</p>
                         </div>
                     </Link>
-                </motion.div>
-            </motion.div>
+                </div>
+            </div>
 
             {/* Quick Actions */}
-            <div className="mt-8">
+            <div className="mt-8 animate-in fade-in slide-in-from-bottom-6 duration-700 delay-100">
                 <h2 className="text-lg font-semibold text-gray-300 mb-4">Quick Filters</h2>
                 <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                     <Link href="/repairs?status=NEW" className="bg-gray-900 border border-gray-800 rounded-xl p-4 text-center hover:border-blue-500 transition-colors">
@@ -162,7 +141,7 @@ export function StaffDashboard() {
             </div>
 
             {/* Recent Repairs Table/List */}
-            <div className="mt-8">
+            <div className="mt-8 animate-in fade-in slide-in-from-bottom-8 duration-700 delay-200">
                 <div className="flex justify-between items-center mb-4">
                     <h2 className="text-lg font-semibold text-gray-300">Recent Repairs</h2>
                     <Link href="/repairs" className="text-blue-500 text-sm hover:underline">View All</Link>

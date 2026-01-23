@@ -3,7 +3,6 @@
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { Eye, EyeOff, Smartphone, ShieldCheck, Zap, Server, Activity, Lock } from 'lucide-react';
-import { motion, AnimatePresence } from 'framer-motion';
 
 export default function LoginPage() {
     const router = useRouter();
@@ -66,35 +65,20 @@ export default function LoginPage() {
                 <div className="absolute bottom-[-10%] right-[-10%] w-[500px] h-[500px] bg-purple-600/10 rounded-full blur-[120px]" />
 
                 <div className="relative z-10">
-                    <motion.div
-                        initial={{ opacity: 0, y: 20 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        transition={{ delay: 0.2 }}
-                        className="flex items-center gap-3 mb-8"
-                    >
+                    <div className="flex items-center gap-3 mb-8 animate-in fade-in slide-in-from-bottom-4 duration-700">
                         <div className="p-3 bg-blue-600 rounded-2xl shadow-lg shadow-blue-500/20">
                             <Smartphone className="w-6 h-6 text-white" />
                         </div>
                         <h1 className="text-2xl font-bold tracking-tight">FIX IT <span className="text-gray-500 font-normal">POS System</span></h1>
-                    </motion.div>
+                    </div>
 
                     <div className="space-y-6 max-w-lg">
-                        <motion.h2
-                            initial={{ opacity: 0, y: 20 }}
-                            animate={{ opacity: 1, y: 0 }}
-                            transition={{ delay: 0.3 }}
-                            className="text-5xl font-bold leading-tight bg-clip-text text-transparent bg-gradient-to-r from-white to-gray-500"
-                        >
+                        <h2 className="text-5xl font-bold leading-tight bg-clip-text text-transparent bg-gradient-to-r from-white to-gray-500 animate-in fade-in slide-in-from-bottom-6 duration-700 delay-100">
                             Professional Repair Management
-                        </motion.h2>
-                        <motion.p
-                            initial={{ opacity: 0 }}
-                            animate={{ opacity: 1 }}
-                            transition={{ delay: 0.4 }}
-                            className="text-lg text-gray-400 leading-relaxed"
-                        >
+                        </h2>
+                        <p className="text-lg text-gray-400 leading-relaxed animate-in fade-in duration-700 delay-200">
                             Secure, efficient, and reliable tracking for all your device service needs. Engineered for speed and precision.
-                        </motion.p>
+                        </p>
                     </div>
                 </div>
 
@@ -105,17 +89,15 @@ export default function LoginPage() {
                         { icon: Activity, label: "Live Analytics", sub: "Revenue Tracking" },
                         { icon: Server, label: "Cloud Sync", sub: "99.9% Uptime" }
                     ].map((item, i) => (
-                        <motion.div
+                        <div
                             key={i}
-                            initial={{ opacity: 0, x: -20 }}
-                            animate={{ opacity: 1, x: 0 }}
-                            transition={{ delay: 0.5 + (i * 0.1) }}
-                            className="p-4 rounded-2xl bg-white/5 border border-white/5 backdrop-blur-sm hover:bg-white/10 transition-colors"
+                            className="p-4 rounded-2xl bg-white/5 border border-white/5 backdrop-blur-sm hover:bg-white/10 transition-colors animate-in fade-in slide-in-from-left-4 duration-500"
+                            style={{ animationDelay: `${500 + (i * 100)}ms`, opacity: 0, animationFillMode: 'forwards' }}
                         >
                             <item.icon className="w-6 h-6 text-blue-400 mb-3" />
                             <h3 className="font-semibold text-white">{item.label}</h3>
                             <p className="text-xs text-gray-500">{item.sub}</p>
-                        </motion.div>
+                        </div>
                     ))}
                 </div>
 
@@ -134,12 +116,7 @@ export default function LoginPage() {
                 </div>
 
                 <div className="w-full max-w-sm relative z-10 px-4">
-                    <motion.div
-                        initial={{ opacity: 0, scale: 0.95 }}
-                        animate={{ opacity: 1, scale: 1 }}
-                        transition={{ duration: 0.5 }}
-                        className="mb-8 text-center"
-                    >
+                    <div className="mb-8 text-center animate-in fade-in zoom-in-95 duration-500">
                         <div className="lg:hidden flex items-center justify-center gap-3 mb-6">
                             <div className="p-2.5 bg-blue-600 rounded-xl shadow-lg shadow-blue-500/20">
                                 <Smartphone className="w-5 h-5 text-white" />
@@ -148,14 +125,10 @@ export default function LoginPage() {
                         </div>
                         <h2 className="text-2xl md:text-3xl font-bold text-white mb-2">Welcome Back</h2>
                         <p className="text-gray-400 text-sm">Authenticate to access the control panel.</p>
-                    </motion.div>
+                    </div>
 
                     <form onSubmit={handleLogin} className="space-y-6">
-                        <motion.div
-                            initial={{ opacity: 0, y: 10 }}
-                            animate={{ opacity: 1, y: 0 }}
-                            transition={{ delay: 0.1 }}
-                        >
+                        <div className="animate-in fade-in slide-in-from-bottom-4 duration-500 delay-100">
                             <label className="block text-sm font-medium text-gray-400 mb-2 ml-1">IDENTITY</label>
                             <div className="relative group">
                                 <input
@@ -166,13 +139,9 @@ export default function LoginPage() {
                                     placeholder="Username"
                                 />
                             </div>
-                        </motion.div>
+                        </div>
 
-                        <motion.div
-                            initial={{ opacity: 0, y: 10 }}
-                            animate={{ opacity: 1, y: 0 }}
-                            transition={{ delay: 0.2 }}
-                        >
+                        <div className="animate-in fade-in slide-in-from-bottom-4 duration-500 delay-200">
                             <label className="block text-sm font-medium text-gray-400 mb-2 ml-1">CREDENTIALS</label>
                             <div className="relative group">
                                 <input
@@ -190,29 +159,19 @@ export default function LoginPage() {
                                     {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
                                 </button>
                             </div>
-                        </motion.div>
+                        </div>
 
-                        <AnimatePresence>
-                            {error && (
-                                <motion.div
-                                    initial={{ opacity: 0, height: 0 }}
-                                    animate={{ opacity: 1, height: 'auto' }}
-                                    exit={{ opacity: 0, height: 0 }}
-                                    className="bg-red-500/10 border border-red-500/20 text-red-400 text-sm py-3 px-4 rounded-lg flex items-center gap-2"
-                                >
-                                    <ShieldCheck className="w-4 h-4" />
-                                    {error}
-                                </motion.div>
-                            )}
-                        </AnimatePresence>
+                        {error && (
+                            <div className="bg-red-500/10 border border-red-500/20 text-red-400 text-sm py-3 px-4 rounded-lg flex items-center gap-2 animate-in fade-in zoom-in-95">
+                                <ShieldCheck className="w-4 h-4" />
+                                {error}
+                            </div>
+                        )}
 
-                        <motion.button
-                            initial={{ opacity: 0, y: 10 }}
-                            animate={{ opacity: 1, y: 0 }}
-                            transition={{ delay: 0.3 }}
+                        <button
                             type="submit"
                             disabled={loading}
-                            className="w-full h-14 bg-white text-black hover:bg-gray-200 disabled:bg-gray-600 disabled:text-gray-400 text-lg font-bold rounded-xl transition-all transform active:scale-95 flex items-center justify-center gap-3 relative overflow-hidden"
+                            className="w-full h-14 bg-white text-black hover:bg-gray-200 disabled:bg-gray-600 disabled:text-gray-400 text-lg font-bold rounded-xl transition-all transform active:scale-95 flex items-center justify-center gap-3 relative overflow-hidden animate-in fade-in slide-in-from-bottom-4 duration-500 delay-300"
                         >
                             {loading ? (
                                 <>
@@ -225,19 +184,14 @@ export default function LoginPage() {
                                     <span>Secure Login</span>
                                 </>
                             )}
-                        </motion.button>
+                        </button>
                     </form>
 
-                    <motion.div
-                        initial={{ opacity: 0 }}
-                        animate={{ opacity: 1 }}
-                        transition={{ delay: 0.6 }}
-                        className="mt-12 text-center"
-                    >
+                    <div className="mt-12 text-center animate-in fade-in duration-700 delay-500">
                         <p className="text-gray-600 text-xs uppercase tracking-widest mb-2">Technical Support</p>
                         <p className="text-gray-200 font-medium">+91 91829 19360</p>
                         <p className="text-gray-500 text-xs mt-1">Shop No. 6, Kalluru</p>
-                    </motion.div>
+                    </div>
                 </div>
             </div>
         </div>

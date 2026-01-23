@@ -19,7 +19,9 @@ export default function SalesPage() {
         customerPhone: ''
     });
 
-    const categories = ['Accessories', 'Tempered Glass', 'Back Cover', 'Charger/Cable', 'Components', 'Used Phone', 'Other'];
+    const [customCategory, setCustomCategory] = useState('');
+
+    const categories = ['Accessories', 'Tempered Glass', 'Back Cover', 'Charger/Cable', 'Components', , 'Add'];
 
     const fetchSales = async () => {
         try {
@@ -40,12 +42,22 @@ export default function SalesPage() {
     const handleAddSale = async (e: React.FormEvent) => {
         e.preventDefault();
         setSubmitting(true);
+
+        const finalCategory = formData.category === 'Add' ? customCategory : formData.category;
+
+        if (formData.category === 'Add' && !customCategory.trim()) {
+            alert("Please enter a custom category name");
+            setSubmitting(false);
+            return;
+        }
+
         try {
             const res = await fetch('/api/sales', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
                     ...formData,
+                    category: finalCategory,
                     price: parseFloat(formData.price)
                 })
             });
@@ -59,6 +71,7 @@ export default function SalesPage() {
                     customerName: '',
                     customerPhone: ''
                 });
+                setCustomCategory('');
                 fetchSales();
             } else {
                 const data = await res.json();
@@ -130,16 +143,42 @@ export default function SalesPage() {
                                 </div>
 
                                 <div className="grid grid-cols-2 gap-4">
-                                    <div>
+                                    <div className={formData.category === 'Add' ? "col-span-2" : ""}>
                                         <label className="text-sm font-medium text-gray-400 mb-1 block">Category</label>
-                                        <select
-                                            className="w-full bg-black border border-gray-700 rounded-xl p-3 focus:border-green-500 outline-none appearance-none"
-                                            value={formData.category}
-                                            onChange={e => setFormData({ ...formData, category: e.target.value })}
-                                        >
-                                            {categories.map(c => <option key={c} value={c}>{c}</option>)}
-                                        </select>
+                                        <div className="flex gap-2">
+                                            <select
+                                                className={`bg-black border border-gray-700 rounded-xl p-3 focus:border-green-500 outline-none appearance-none ${formData.category === 'Add' ? 'w-1/3' : 'w-full'}`}
+                                                value={formData.category}
+                                                onChange={e => setFormData({ ...formData, category: e.target.value })}
+                                            >
+                                                {categories.map(c => <option key={c} value={c}>{c}</option>)}
+                                            </select>
+                                            {formData.category === 'Add' && (
+                                                <input
+                                                    autoFocus
+                                                    placeholder="Enter Category"
+                                                    className="w-2/3 bg-black border border-gray-700 rounded-xl p-3 focus:border-green-500 outline-none animate-in fade-in slide-in-from-left-2"
+                                                    value={customCategory}
+                                                    onChange={(e) => setCustomCategory(e.target.value)}
+                                                />
+                                            )}
+                                        </div>
                                     </div>
+                                    {formData.category !== 'Add' && (
+                                        <div>
+                                            <label className="text-sm font-medium text-gray-400 mb-1 block">Quantity</label>
+                                            <input
+                                                required type="number" min="1"
+                                                className="w-full bg-black border border-gray-700 rounded-xl p-3 focus:border-green-500 outline-none"
+                                                value={formData.quantity}
+                                                onChange={e => setFormData({ ...formData, quantity: parseInt(e.target.value) || 1 })}
+                                            />
+                                        </div>
+                                    )}
+                                </div>
+
+                                {/* Quantity Field for 'Add' mode (moved out of grid to keep layout clean) */}
+                                {formData.category === 'Add' && (
                                     <div>
                                         <label className="text-sm font-medium text-gray-400 mb-1 block">Quantity</label>
                                         <input
@@ -149,7 +188,7 @@ export default function SalesPage() {
                                             onChange={e => setFormData({ ...formData, quantity: parseInt(e.target.value) || 1 })}
                                         />
                                     </div>
-                                </div>
+                                )}
 
                                 <div>
                                     <label className="text-sm font-medium text-gray-400 mb-1 block">Selling Price (Per Unit)</label>
