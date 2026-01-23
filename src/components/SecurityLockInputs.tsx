@@ -29,8 +29,9 @@ export const SecurityLockInputs: React.FC<SecurityLockInputsProps> = ({
     const [patternPath, setPatternPath] = useState<number[]>(
         initialMode === "PATTERN" ? parsePattern(initialValue) : []
     );
-    // Cursor position for rubber-band line
-    const [cursorPos, setCursorPos] = useState<{ x: number, y: number } | null>(null);
+
+    // Low-Latency Rubber-line Ref
+    const lineRef = useRef<SVGLineElement>(null);
 
     const svgRef = useRef<SVGSVGElement>(null);
     const containerRef = useRef<HTMLDivElement>(null);
@@ -44,7 +45,6 @@ export const SecurityLockInputs: React.FC<SecurityLockInputsProps> = ({
         if (initialValue) {
             if (initialMode === "PATTERN") {
                 setPatternPath(parsePattern(initialValue));
-                setCursorPos(null);
             }
             else if (initialMode === "PIN") setPin(initialValue);
             else if (initialMode === "PASSWORD") setPassword(initialValue);
@@ -71,7 +71,6 @@ export const SecurityLockInputs: React.FC<SecurityLockInputsProps> = ({
         if (readOnly) return;
         setIsDrawing(true);
         setPatternPath([index]);
-        setCursorPos(getCoordinates(index));
     };
 
     const calculateIntermediate = (start: number, end: number): number | null => {
@@ -97,7 +96,12 @@ export const SecurityLockInputs: React.FC<SecurityLockInputsProps> = ({
         const rect = containerRef.current.getBoundingClientRect();
         const x = e.clientX - rect.left;
         const y = e.clientY - rect.top;
-        setCursorPos({ x, y });
+
+        // PERFORMANCE FIX: Directly manipulate DOM for 60fps+ tracking
+        if (lineRef.current) {
+            lineRef.current.setAttribute("x2", String(x));
+            lineRef.current.setAttribute("y2", String(y));
+        }
 
         // Check distance to all dots
         for (let i = 0; i < 9; i++) {
@@ -139,7 +143,6 @@ export const SecurityLockInputs: React.FC<SecurityLockInputsProps> = ({
     const handlePatternReset = () => {
         if (readOnly) return;
         setPatternPath([]);
-        setCursorPos(null);
         if (onChange) onChange("", "PATTERN");
     };
 
@@ -147,12 +150,12 @@ export const SecurityLockInputs: React.FC<SecurityLockInputsProps> = ({
         const handleUp = () => {
             if (isDrawing) {
                 setIsDrawing(false);
-                setCursorPos(null);
                 if (onChange) onChange(patternPath.join("-"), "PATTERN");
             }
         };
         window.addEventListener("pointerup", handleUp);
         window.addEventListener("touchend", handleUp);
+        // Clear listeners
         return () => {
             window.removeEventListener("pointerup", handleUp);
             window.removeEventListener("touchend", handleUp);
@@ -262,17 +265,19 @@ export const SecurityLockInputs: React.FC<SecurityLockInputsProps> = ({
                                     />
                                 )}
 
-                                {/* Rubber Band Line (Current Cursor) */}
-                                {isDrawing && cursorPos && patternPath.length > 0 && (
+                                {/* Rubber Band Line (ZERO-LAG REF IMPLEMENTATION) */}
+                                {isDrawing && patternPath.length > 0 && (
                                     <line
+                                        ref={lineRef}
                                         x1={getCoordinates(patternPath[patternPath.length - 1]).x}
                                         y1={getCoordinates(patternPath[patternPath.length - 1]).y}
-                                        x2={cursorPos.x}
-                                        y2={cursorPos.y}
+                                        x2={getCoordinates(patternPath[patternPath.length - 1]).x}
+                                        y2={getCoordinates(patternPath[patternPath.length - 1]).y}
                                         stroke="#3b82f6"
                                         strokeWidth="6"
                                         strokeLinecap="round"
                                         strokeOpacity="0.5"
+                                        className="pointer-events-none"
                                     />
                                 )}
                             </svg>
