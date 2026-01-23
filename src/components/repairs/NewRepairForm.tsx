@@ -137,7 +137,7 @@ export function NewRepairForm({ userId }: { userId: string }) {
             if (!res.ok) throw new Error(result.error || 'Failed to create repair');
 
             // Save invoice to database (optional, for record)
-            await fetch('/api/invoices', {
+            const invRes = await fetch('/api/invoices', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
@@ -152,6 +152,11 @@ export function NewRepairForm({ userId }: { userId: string }) {
                     warrantyDays: data.warrantyDays
                 })
             });
+
+            if (!invRes.ok) {
+                const invError = await invRes.json();
+                console.warn('Invoice creation failed:', invError);
+            }
 
             setSavedData({ ...data, repairId: result.repairId });
             setShowSuccess(true);
