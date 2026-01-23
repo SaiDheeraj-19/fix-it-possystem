@@ -101,23 +101,80 @@ export async function GET(request: Request) {
                 activeRepairs = parseInt(global.active_count) || 0;
                 repairsThisMonth = parseInt(global.month_count) || 0;
 
-                chartData = statsResult.rows.map((r: any) => ({
+                // --- TREND DATA (Time Series) ---
+                const trendData = statsResult.rows.map((r: any) => ({
                     name: r.label,
                     revenue: parseFloat(r.amount) || 0
                 }));
-            }
 
+                // --- CATEGORY DATA (Pie Chart) ---
+                const startDateInterval = chartDays + ' days';
+
+                const chartQuery = `
+                    WITH RelevantSales AS (
+                        SELECT category, total_price as amount 
+                        FROM sales 
+                        WHERE created_at >= (CURRENT_TIMESTAMP AT TIME ZONE 'Asia/Kolkata') - INTERVAL '${startDateInterval}'
+                    ),
+                    RelevantRepairs AS (
+                        -- Advances collected in period
+                        SELECT 'Repairs' as category, advance as amount
+                        FROM repairs
+                        WHERE created_at >= (CURRENT_TIMESTAMP AT TIME ZONE 'Asia/Kolkata') - INTERVAL '${startDateInterval}'
+                        
+                        UNION ALL
+                        
+                        -- Balances collected in period
+                        SELECT 'Repairs' as category, (estimated_cost - advance) as amount
+                        FROM repairs
+                        WHERE balance_collected_at >= (CURRENT_TIMESTAMP AT TIME ZONE 'Asia/Kolkata') - INTERVAL '${startDateInterval}'
+                    ),
+                    Combined AS (
+                        SELECT category, amount FROM RelevantSales
+                        UNION ALL
+                        SELECT category, amount FROM RelevantRepairs
+                    )
+                    SELECT category as name, SUM(amount) as revenue
+                    FROM Combined
+                    GROUP BY category
+                    ORDER BY revenue DESC
+                `;
+
+                const chartResult = await query(chartQuery);
+                const categoryData = chartResult.rows.map((r: any) => ({
+                    name: r.name || 'Uncategorized',
+                    revenue: parseFloat(r.revenue) || 0
+                }));
+
+                // Fallback for empty pie chart
+                if (categoryData.length === 0) {
+                    // Empty array is fine, UI handles it or shows placeholder
+                }
+
+                return NextResponse.json({
+                    revenue,
+                    todayRevenue,
+                    pendingBalance,
+                    activeRepairs,
+                    repairsThisMonth,
+                    trendData,
+                    categoryData
+                });
+
+            }
         } catch (err: any) {
             console.error('Stats query logic error:', err);
         }
 
+        // Fallback response inside catch or if raw query failed
         return NextResponse.json({
-            revenue,
-            todayRevenue,
-            pendingBalance,
-            activeRepairs,
-            repairsThisMonth,
-            chartData
+            revenue: 0,
+            todayRevenue: 0,
+            pendingBalance: 0,
+            activeRepairs: 0,
+            repairsThisMonth: 0,
+            trendData: [],
+            categoryData: []
         });
 
     } catch (err: any) {
@@ -125,3 +182,5 @@ export async function GET(request: Request) {
         return NextResponse.json({ error: err.message }, { status: 500 });
     }
 }
+
+

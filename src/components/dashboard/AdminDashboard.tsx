@@ -2,8 +2,8 @@
 
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
-import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
-import { DollarSign, TrendingUp, AlertTriangle, Layers, Calendar, FileText, Settings, UserPlus, Filter, Plus, ShoppingCart } from 'lucide-react';
+import { BarChart, Bar, AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Cell, PieChart, Pie, Legend } from 'recharts';
+import { DollarSign, TrendingUp, AlertTriangle, Layers, Calendar, FileText, Settings, UserPlus, Filter, Plus, ShoppingCart, PieChart as PieChartIcon, Activity } from 'lucide-react';
 
 import { LiveClock } from '@/components/dashboard/LiveClock';
 import { AdminWelcomeScreen } from '@/components/dashboard/AdminWelcomeScreen';
@@ -14,14 +14,18 @@ interface DashboardData {
     pendingBalance: number;
     activeRepairs: number;
     repairsThisMonth: number;
-    chartData: { name: string; revenue: number }[];
+    trendData: { name: string; revenue: number }[];
+    categoryData: { name: string; revenue: number }[];
 }
+
+const COLORS = ['#3b82f6', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6', '#ec4899', '#6366f1'];
 
 export function AdminDashboard() {
     const [data, setData] = useState<DashboardData | null>(null);
     const [loading, setLoading] = useState(true);
     const [showWelcome, setShowWelcome] = useState(false);
     const [chartPeriod, setChartPeriod] = useState<'WEEK' | 'MONTH'>('WEEK');
+    const [viewType, setViewType] = useState<'TREND' | 'CATEGORY'>('CATEGORY');
 
     useEffect(() => {
         const hasSeenWelcome = sessionStorage.getItem('hasSeenAdminWelcome');
@@ -42,10 +46,10 @@ export function AdminDashboard() {
                 const json = await res.json();
                 setData(json);
             } else {
-                setData({ revenue: 0, todayRevenue: 0, pendingBalance: 0, activeRepairs: 0, repairsThisMonth: 0, chartData: [] });
+                setData(null);
             }
         } catch {
-            setData({ revenue: 0, todayRevenue: 0, pendingBalance: 0, activeRepairs: 0, repairsThisMonth: 0, chartData: [] });
+            setData(null);
         } finally {
             setLoading(false);
         }
@@ -125,39 +129,96 @@ export function AdminDashboard() {
                 </div>
 
                 {/* Chart Area */}
-                <div className="col-span-1 md:col-span-3 bg-gray-900/50 border border-gray-800 rounded-3xl p-6 min-h-[400px]">
-                    <div className="flex justify-between items-center mb-6">
-                        <h3 className="text-lg font-semibold text-gray-200">Revenue Analysis</h3>
-                        <div className="flex bg-gray-800 rounded-lg p-1">
-                            <button
-                                onClick={() => setChartPeriod('WEEK')}
-                                className={`px-3 py-1.5 text-xs font-medium rounded-md transition-colors ${chartPeriod === 'WEEK' ? 'bg-black text-white shadow-sm' : 'text-gray-400 hover:text-white'}`}
-                            >
-                                Weekly
-                            </button>
-                            <button
-                                onClick={() => setChartPeriod('MONTH')}
-                                className={`px-3 py-1.5 text-xs font-medium rounded-md transition-colors ${chartPeriod === 'MONTH' ? 'bg-black text-white shadow-sm' : 'text-gray-400 hover:text-white'}`}
-                            >
-                                Monthly
-                            </button>
+                <div className="col-span-1 md:col-span-3 bg-gray-900/50 border border-gray-800 rounded-3xl p-6 min-h-[400px] flex flex-col">
+                    <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-8">
+                        <div>
+                            <h3 className="text-lg font-semibold text-gray-200">Revenue Analytics</h3>
+                            <p className="text-sm text-gray-500">Track earnings by time or category.</p>
+                        </div>
+                        <div className="flex items-center gap-4">
+                            {/* View Type Toggle */}
+                            <div className="flex bg-gray-800 rounded-lg p-1">
+                                <button
+                                    onClick={() => setViewType('TREND')}
+                                    className={`p-2 rounded-md transition-colors ${viewType === 'TREND' ? 'bg-black text-blue-400 shadow-sm' : 'text-gray-400 hover:text-white'}`}
+                                    title="Trend View"
+                                >
+                                    <Activity className="w-4 h-4" />
+                                </button>
+                                <button
+                                    onClick={() => setViewType('CATEGORY')}
+                                    className={`p-2 rounded-md transition-colors ${viewType === 'CATEGORY' ? 'bg-black text-blue-400 shadow-sm' : 'text-gray-400 hover:text-white'}`}
+                                    title="Category View"
+                                >
+                                    <PieChartIcon className="w-4 h-4" />
+                                </button>
+                            </div>
+
+                            {/* Period Toggle */}
+                            <div className="flex bg-gray-800 rounded-lg p-1">
+                                <button
+                                    onClick={() => setChartPeriod('WEEK')}
+                                    className={`px-3 py-1.5 text-xs font-medium rounded-md transition-colors ${chartPeriod === 'WEEK' ? 'bg-black text-white shadow-sm' : 'text-gray-400 hover:text-white'}`}
+                                >
+                                    Weekly
+                                </button>
+                                <button
+                                    onClick={() => setChartPeriod('MONTH')}
+                                    className={`px-3 py-1.5 text-xs font-medium rounded-md transition-colors ${chartPeriod === 'MONTH' ? 'bg-black text-white shadow-sm' : 'text-gray-400 hover:text-white'}`}
+                                >
+                                    Monthly
+                                </button>
+                            </div>
                         </div>
                     </div>
 
-                    <ResponsiveContainer width="100%" height={300}>
-                        <BarChart data={data.chartData}>
-                            <CartesianGrid strokeDasharray="3 3" stroke="#333" vertical={false} />
-                            <XAxis dataKey="name" stroke="#666" tick={{ fill: '#666' }} axisLine={false} tickLine={false} />
-                            <YAxis stroke="#666" tick={{ fill: '#666' }} axisLine={false} tickLine={false} tickFormatter={(value) => `₹${value}`} />
-                            <Tooltip
-                                contentStyle={{ backgroundColor: '#000', border: '1px solid #333', borderRadius: '8px' }}
-                                itemStyle={{ color: '#fff' }}
-                                cursor={{ fill: '#ffffff10' }}
-                                formatter={(value: number) => [`Rs. ${value.toLocaleString('en-IN')}`, 'Revenue']}
-                            />
-                            <Bar dataKey="revenue" fill="#3b82f6" radius={[4, 4, 4, 4]} barSize={40} />
-                        </BarChart>
-                    </ResponsiveContainer>
+                    <div className="flex-1 min-h-[300px] w-full">
+                        <ResponsiveContainer width="100%" height="100%">
+                            {viewType === 'CATEGORY' ? (
+                                <PieChart>
+                                    <Pie
+                                        data={data.categoryData}
+                                        cx="50%"
+                                        cy="50%"
+                                        labelLine={false}
+                                        label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`}
+                                        outerRadius={100}
+                                        fill="#8884d8"
+                                        dataKey="revenue"
+                                    >
+                                        {data.categoryData.map((entry, index) => (
+                                            <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                                        ))}
+                                    </Pie>
+                                    <Tooltip
+                                        contentStyle={{ backgroundColor: '#000', border: '1px solid #333', borderRadius: '8px' }}
+                                        itemStyle={{ color: '#fff' }}
+                                        formatter={(value: number) => [`Rs. ${value.toLocaleString('en-IN')}`, 'Revenue']}
+                                    />
+                                    <Legend verticalAlign="bottom" height={36} iconType="circle" />
+                                </PieChart>
+                            ) : (
+                                <AreaChart data={data.trendData}>
+                                    <defs>
+                                        <linearGradient id="colorRevenue" x1="0" y1="0" x2="0" y2="1">
+                                            <stop offset="5%" stopColor="#3b82f6" stopOpacity={0.3} />
+                                            <stop offset="95%" stopColor="#3b82f6" stopOpacity={0} />
+                                        </linearGradient>
+                                    </defs>
+                                    <CartesianGrid strokeDasharray="3 3" stroke="#333" vertical={false} />
+                                    <XAxis dataKey="name" stroke="#666" tick={{ fill: '#9ca3af', fontSize: 12 }} axisLine={false} tickLine={false} interval={0} />
+                                    <YAxis stroke="#666" tick={{ fill: '#666' }} axisLine={false} tickLine={false} tickFormatter={(value) => `₹${value}`} />
+                                    <Tooltip
+                                        contentStyle={{ backgroundColor: '#000', border: '1px solid #333', borderRadius: '8px' }}
+                                        itemStyle={{ color: '#fff' }}
+                                        cursor={{ stroke: '#ffffff20' }}
+                                        formatter={(value: number) => [`Rs. ${value.toLocaleString('en-IN')}`, 'Revenue']}
+                                    />
+                                    <Area type="monotone" dataKey="revenue" stroke="#3b82f6" strokeWidth={3} fillOpacity={1} fill="url(#colorRevenue)" />
+                                </AreaChart>
+                            )}
+                        </ResponsiveContainer>
+                    </div>
                 </div>
 
                 {/* Quick Actions & Monthly Stats */}
