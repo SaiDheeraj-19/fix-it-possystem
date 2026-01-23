@@ -9,6 +9,8 @@ import { LiveClock } from '@/components/dashboard/LiveClock';
 
 export function StaffDashboard() {
     const [activeCount, setActiveCount] = useState(0);
+    const [repairs, setRepairs] = useState<any[]>([]);
+    const [loading, setLoading] = useState(true);
 
     useEffect(() => {
         // Fetch real active count (everything not delivered/cancelled)
@@ -16,6 +18,18 @@ export function StaffDashboard() {
             .then(res => res.json())
             .then(data => setActiveCount(data.active || 0))
             .catch(() => setActiveCount(0));
+
+        // Fetch recent repairs
+        fetch('/api/repairs')
+            .then(res => res.json())
+            .then(data => {
+                setRepairs(data.repairs?.slice(0, 5) || []);
+                setLoading(false);
+            })
+            .catch(() => {
+                setRepairs([]);
+                setLoading(false);
+            });
     }, []);
 
     const container = {
@@ -31,6 +45,16 @@ export function StaffDashboard() {
     const item = {
         hidden: { y: 20, opacity: 0 },
         show: { y: 0, opacity: 1 }
+    };
+
+    const getStatusColor = (s: string) => {
+        switch (s) {
+            case 'NEW': return 'text-blue-400 border-blue-400/30 bg-blue-400/10';
+            case 'PENDING': return 'text-yellow-400 border-yellow-400/30 bg-yellow-400/10';
+            case 'REPAIRED': return 'text-green-400 border-green-400/30 bg-green-400/10';
+            case 'DELIVERED': return 'text-gray-400 border-gray-400/30 bg-gray-400/10';
+            default: return 'text-red-400';
+        }
     };
 
     return (
@@ -101,9 +125,9 @@ export function StaffDashboard() {
                 </motion.div>
             </motion.div>
 
-            {/* Recent Repairs Section */}
-            <div className="mt-12">
-                <h2 className="text-lg font-semibold text-gray-300 mb-4">Quick Actions</h2>
+            {/* Quick Actions */}
+            <div className="mt-8">
+                <h2 className="text-lg font-semibold text-gray-300 mb-4">Quick Filters</h2>
                 <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                     <Link href="/repairs?status=NEW" className="bg-gray-900 border border-gray-800 rounded-xl p-4 text-center hover:border-blue-500 transition-colors">
                         <div className="text-2xl font-bold text-blue-400">New</div>
@@ -121,6 +145,60 @@ export function StaffDashboard() {
                         <div className="text-2xl font-bold text-gray-400">Delivered</div>
                         <div className="text-sm text-gray-400">Completed</div>
                     </Link>
+                </div>
+            </div>
+
+            {/* Recent Repairs Table/List */}
+            <div className="mt-8">
+                <div className="flex justify-between items-center mb-4">
+                    <h2 className="text-lg font-semibold text-gray-300">Recent Repairs</h2>
+                    <Link href="/repairs" className="text-blue-500 text-sm hover:underline">View All</Link>
+                </div>
+
+                <div className="grid gap-3">
+                    {loading ? (
+                        Array(3).fill(0).map((_, i) => (
+                            <div key={i} className="h-20 bg-gray-900/50 border border-gray-800 rounded-2xl animate-pulse" />
+                        ))
+                    ) : repairs.length > 0 ? (
+                        repairs.map((repair) => (
+                            <Link key={repair.id} href={`/repairs/${repair.id}`} className="block group">
+                                <div className="bg-gray-900/50 border border-gray-800 rounded-2xl p-4 hover:border-blue-500/50 transition-all">
+                                    <div className="flex items-center justify-between gap-4">
+                                        <div className="flex items-center gap-3">
+                                            <div className="p-2 bg-gray-800 rounded-lg shrink-0">
+                                                <Smartphone className="text-blue-400 w-5 h-5" />
+                                            </div>
+                                            <div className="min-w-0">
+                                                <h3 className="font-bold text-white truncate group-hover:text-blue-400 transition-colors">
+                                                    {repair.device_brand} {repair.device_model}
+                                                </h3>
+                                                <p className="text-xs text-gray-400">
+                                                    {repair.customer_name} • {repair.customer_phone}
+                                                </p>
+                                            </div>
+                                        </div>
+
+                                        <div className="flex items-center gap-4">
+                                            <div className="hidden md:flex flex-col items-end">
+                                                <span className="text-[10px] uppercase text-gray-500 font-bold tracking-widest">Balance</span>
+                                                <span className={`text-sm font-bold ${parseFloat(repair.estimated_cost) - parseFloat(repair.advance) > 0 ? 'text-red-400' : 'text-green-400'}`}>
+                                                    ₹{(parseFloat(repair.estimated_cost) - parseFloat(repair.advance)).toLocaleString('en-IN')}
+                                                </span>
+                                            </div>
+                                            <span className={`px-2 py-1 rounded text-[10px] font-bold uppercase tracking-wider border ${getStatusColor(repair.status)}`}>
+                                                {repair.status}
+                                            </span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </Link>
+                        ))
+                    ) : (
+                        <div className="text-center py-10 bg-gray-900/20 border border-dashed border-gray-800 rounded-2xl">
+                            <p className="text-gray-500 text-sm">No recent repairs found.</p>
+                        </div>
+                    )}
                 </div>
             </div>
         </div>
