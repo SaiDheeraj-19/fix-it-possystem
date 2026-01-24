@@ -17,7 +17,8 @@ export async function POST(request: Request) {
             category,
             quantity,
             price,
-            paymentMode
+            paymentMode,
+            saleDate // Optional custom date
         } = body;
 
         if (!itemName || !quantity || !price) {
@@ -28,10 +29,19 @@ export async function POST(request: Request) {
 
         const result = await query(
             `INSERT INTO sales 
-            (item_name, category, quantity, price_per_unit, total_price, payment_mode, created_by)
-            VALUES ($1, $2, $3, $4, $5, $6, $7)
+            (item_name, category, quantity, price_per_unit, total_price, payment_mode, created_by, created_at)
+            VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
             RETURNING id`,
-            [itemName, category || 'Accessories', quantity, price, totalPrice, paymentMode || 'CASH', session.id]
+            [
+                itemName,
+                category || 'Accessories',
+                quantity,
+                price,
+                totalPrice,
+                paymentMode || 'CASH',
+                session.id,
+                saleDate ? new Date(saleDate) : new Date() // Use provided date or current time
+            ]
         );
 
         return NextResponse.json({

@@ -58,8 +58,8 @@ export function NewRepairForm({ userId, initialData, repairId }: { userId: strin
     });
 
     // Security State
-    const [securityValue, setSecurityValue] = useState(""); // We don't pre-fill security for now as it's encrypted and hard to show back directly in pattern lock unless decrypted fully passed.
-    const [securityMode, setSecurityMode] = useState<"PATTERN" | "PIN" | "PASSWORD" | "NONE">("PATTERN");
+    const [securityValue, setSecurityValue] = useState(initialData?.securityValue || "");
+    const [securityMode, setSecurityMode] = useState<"PATTERN" | "PIN" | "PASSWORD" | "NONE">((initialData?.securityMode as any) || "PATTERN");
 
     // Pre-fill images
     const [images, setImages] = useState<string[]>(initialData?.images || []);
@@ -352,7 +352,8 @@ export function NewRepairForm({ userId, initialData, repairId }: { userId: strin
                 </div>
 
                 <SecurityLockInputs
-                    initialMode="PATTERN"
+                    initialMode={(initialData?.securityMode as any) || "PATTERN"}
+                    initialValue={initialData?.securityValue}
                     onChange={(val, mode) => {
                         setSecurityValue(val);
                         setSecurityMode(mode);

@@ -4,6 +4,7 @@ import { query } from "@/lib/db";
 import { redirect } from "next/navigation";
 import Link from "next/link";
 import { ArrowLeft } from "lucide-react";
+import { decrypt } from "@/lib/crypto";
 
 async function getRepair(id: string) {
     try {
@@ -25,6 +26,38 @@ export default async function EditRepairPage({ params }: { params: { id: string 
     }
 
     const repair = await getRepair(params.id);
+
+    if (repair) {
+        // Decrypt Security Fields
+        try {
+            if (repair.pin_encrypted && repair.pin_iv) {
+                repair.pin = decrypt({ content: repair.pin_encrypted, iv: repair.pin_iv });
+            }
+            if (repair.pattern_encrypted && repair.pattern_iv) {
+                repair.pattern = decrypt({ content: repair.pattern_encrypted, iv: repair.pattern_iv });
+            }
+            if (repair.password_encrypted && repair.password_iv) {
+                repair.password = decrypt({ content: repair.password_encrypted, iv: repair.password_iv });
+            }
+        } catch (e) {
+            console.error("Failed to decrypt security fields", e);
+        }
+
+        // Normalize for Form
+        if (repair.pin) {
+            repair.securityMode = 'PIN';
+            repair.securityValue = repair.pin;
+        } else if (repair.pattern) {
+            repair.securityMode = 'PATTERN';
+            repair.securityValue = repair.pattern;
+        } else if (repair.password) {
+            repair.securityMode = 'PASSWORD';
+            repair.securityValue = repair.password;
+        } else {
+            repair.securityMode = 'NONE';
+            repair.securityValue = '';
+        }
+    }
 
     if (!repair) {
         return (

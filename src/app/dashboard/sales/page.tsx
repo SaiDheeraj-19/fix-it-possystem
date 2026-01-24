@@ -15,13 +15,14 @@ export default function SalesPage() {
         category: 'Accessories',
         quantity: 1,
         price: '',
-        paymentMode: 'CASH'
+        paymentMode: 'CASH',
+        saleDate: ''
     });
 
     const [customCategory, setCustomCategory] = useState('');
     const [editingId, setEditingId] = useState<string | null>(null);
 
-    const categories = ['Accessories', 'Tempered Glass', 'Back Cover', 'Charger/Cable', 'Components', , 'Add'];
+    const categories = ['Accessories', 'Tempered Glass', 'Back Cover', 'Charger/Cable', 'Components', 'Add'];
 
     const fetchSales = async () => {
         try {
@@ -77,14 +78,8 @@ export default function SalesPage() {
                     category: 'Accessories',
                     quantity: 1,
                     price: '',
-                    paymentMode: 'CASH'
-                });
-                setFormData({
-                    itemName: '',
-                    category: 'Accessories',
-                    quantity: 1,
-                    price: '',
-                    paymentMode: 'CASH'
+                    paymentMode: 'CASH',
+                    saleDate: ''
                 });
                 setCustomCategory('');
                 setEditingId(null);
@@ -120,7 +115,8 @@ export default function SalesPage() {
             category: sale.category,
             quantity: sale.quantity,
             price: sale.price_per_unit,
-            paymentMode: sale.payment_mode || 'CASH'
+            paymentMode: sale.payment_mode || 'CASH',
+            saleDate: sale.created_at ? new Date(sale.created_at).toISOString().split('T')[0] : ''
         });
         setEditingId(sale.id);
         setShowAddForm(true);
@@ -148,7 +144,8 @@ export default function SalesPage() {
                                 category: 'Accessories',
                                 quantity: 1,
                                 price: '',
-                                paymentMode: 'CASH'
+                                paymentMode: 'CASH',
+                                saleDate: ''
                             });
                             setShowAddForm(true);
                         }}
@@ -243,6 +240,17 @@ export default function SalesPage() {
                                 </div>
 
                                 <div>
+                                    <label className="text-sm font-medium text-gray-400 mb-1 block">Sale Date (Optional)</label>
+                                    <input
+                                        type="date"
+                                        className="w-full bg-black border border-gray-700 rounded-xl p-3 focus:border-green-500 outline-none date-input-icon-white"
+                                        value={formData.saleDate}
+                                        onChange={e => setFormData({ ...formData, saleDate: e.target.value })}
+                                        style={{ colorScheme: 'dark' }}
+                                    />
+                                </div>
+
+                                <div>
                                     <label className="text-sm font-medium text-gray-400 mb-1 block">Payment Mode</label>
                                     <div className="grid grid-cols-3 gap-3">
                                         {['CASH', 'UPI', 'CARD'].map(mode => (
@@ -280,69 +288,71 @@ export default function SalesPage() {
                     </div>
                 )}
 
-                {loading ? (
-                    <div className="flex justify-center p-20">
-                        <Loader2 className="w-10 h-10 animate-spin text-green-500" />
-                    </div>
-                ) : (
-                    <div className="space-y-4">
-                        {sales.length === 0 ? (
-                            <div className="text-center py-20 bg-gray-900/30 border border-dashed border-gray-800 rounded-3xl">
-                                <Package className="w-12 h-12 text-gray-700 mx-auto mb-4" />
-                                <p className="text-gray-500">No sales recorded yet.</p>
-                                <Button variant="link" className="text-green-500" onClick={() => setShowAddForm(true)}>Record your first sale</Button>
-                            </div>
-                        ) : (
-                            <div className="grid grid-cols-1 gap-4">
-                                {sales.map(sale => (
-                                    <div key={sale.id} className="bg-gray-900/50 border border-gray-800 rounded-2xl p-4 md:p-5 flex flex-col md:flex-row justify-between items-start md:items-center gap-4 group hover:border-green-500/30 transition-all">
-                                        <div className="flex items-center gap-4 w-full md:w-auto">
-                                            <div className="p-2.5 bg-gray-800 rounded-xl shrink-0">
-                                                <Tag className="w-5 h-5 text-gray-400" />
-                                            </div>
-                                            <div className="min-w-0 flex-1">
-                                                <h3 className="text-base md:text-lg font-bold text-white truncate">{sale.item_name}</h3>
-                                                <div className="flex flex-wrap gap-2 mt-1">
-                                                    <span className="text-[10px] md:text-xs font-bold px-1.5 md:px-2 py-0.5 rounded bg-green-900/30 text-green-400 uppercase tracking-wider">{sale.category}</span>
-                                                    <span className="text-[10px] md:text-xs text-gray-500">{sale.quantity} x Rs. {parseFloat(sale.price_per_unit).toLocaleString('en-IN')}</span>
+                {
+                    loading ? (
+                        <div className="flex justify-center p-20">
+                            <Loader2 className="w-10 h-10 animate-spin text-green-500" />
+                        </div>
+                    ) : (
+                        <div className="space-y-4">
+                            {sales.length === 0 ? (
+                                <div className="text-center py-20 bg-gray-900/30 border border-dashed border-gray-800 rounded-3xl">
+                                    <Package className="w-12 h-12 text-gray-700 mx-auto mb-4" />
+                                    <p className="text-gray-500">No sales recorded yet.</p>
+                                    <Button variant="link" className="text-green-500" onClick={() => setShowAddForm(true)}>Record your first sale</Button>
+                                </div>
+                            ) : (
+                                <div className="grid grid-cols-1 gap-4">
+                                    {sales.map(sale => (
+                                        <div key={sale.id} className="bg-gray-900/50 border border-gray-800 rounded-2xl p-4 md:p-5 flex flex-col md:flex-row justify-between items-start md:items-center gap-4 group hover:border-green-500/30 transition-all">
+                                            <div className="flex items-center gap-4 w-full md:w-auto">
+                                                <div className="p-2.5 bg-gray-800 rounded-xl shrink-0">
+                                                    <Tag className="w-5 h-5 text-gray-400" />
                                                 </div>
-                                            </div>
-                                        </div>
-
-                                        <div className="flex flex-row md:flex-col items-center md:items-end justify-between w-full md:w-auto gap-2">
-                                            <div className="flex flex-col items-start md:items-end">
-                                                <div className="text-xl md:text-2xl font-black text-white">Rs. {parseFloat(sale.total_price).toLocaleString('en-IN')}</div>
-                                                <div className="flex items-center gap-2 text-[10px] text-gray-600 font-medium">
-                                                    <div className="flex items-center gap-1">
-                                                        <span className={`px-1.5 py-0.5 rounded text-[10px] font-bold ${sale.payment_mode === 'UPI' ? 'bg-purple-500/20 text-purple-400' : sale.payment_mode === 'CARD' ? 'bg-orange-500/20 text-orange-400' : 'bg-green-500/20 text-green-400'}`}>
-                                                            {sale.payment_mode || 'CASH'}
-                                                        </span>
+                                                <div className="min-w-0 flex-1">
+                                                    <h3 className="text-base md:text-lg font-bold text-white truncate">{sale.item_name}</h3>
+                                                    <div className="flex flex-wrap gap-2 mt-1">
+                                                        <span className="text-[10px] md:text-xs font-bold px-1.5 md:px-2 py-0.5 rounded bg-green-900/30 text-green-400 uppercase tracking-wider">{sale.category}</span>
+                                                        <span className="text-[10px] md:text-xs text-gray-500">{sale.quantity} x Rs. {parseFloat(sale.price_per_unit).toLocaleString('en-IN')}</span>
                                                     </div>
-                                                    <span>•</span>
-                                                    <div>{new Date(sale.created_at).toLocaleDateString('en-IN', { timeZone: 'Asia/Kolkata', day: '2-digit', month: 'short' })}</div>
                                                 </div>
                                             </div>
 
-                                            <button
-                                                onClick={() => handleEdit(sale)}
-                                                className="p-2 text-gray-600 hover:text-blue-500 hover:bg-blue-500/10 rounded-lg transition-colors md:opacity-0 group-hover:opacity-100"
-                                            >
-                                                <Pencil className="w-4 h-4 md:w-5 md:h-5" />
-                                            </button>
-                                            <button
-                                                onClick={() => handleDelete(sale.id)}
-                                                className="p-2 text-gray-600 hover:text-red-500 hover:bg-red-500/10 rounded-lg transition-colors md:opacity-0 group-hover:opacity-100"
-                                            >
-                                                <Trash2 className="w-4 h-4 md:w-5 md:h-5" />
-                                            </button>
+                                            <div className="flex flex-row md:flex-col items-center md:items-end justify-between w-full md:w-auto gap-2">
+                                                <div className="flex flex-col items-start md:items-end">
+                                                    <div className="text-xl md:text-2xl font-black text-white">Rs. {parseFloat(sale.total_price).toLocaleString('en-IN')}</div>
+                                                    <div className="flex items-center gap-2 text-[10px] text-gray-600 font-medium">
+                                                        <div className="flex items-center gap-1">
+                                                            <span className={`px-1.5 py-0.5 rounded text-[10px] font-bold ${sale.payment_mode === 'UPI' ? 'bg-purple-500/20 text-purple-400' : sale.payment_mode === 'CARD' ? 'bg-orange-500/20 text-orange-400' : 'bg-green-500/20 text-green-400'}`}>
+                                                                {sale.payment_mode || 'CASH'}
+                                                            </span>
+                                                        </div>
+                                                        <span>•</span>
+                                                        <div>{new Date(sale.created_at).toLocaleDateString('en-IN', { timeZone: 'Asia/Kolkata', day: '2-digit', month: 'short' })}</div>
+                                                    </div>
+                                                </div>
+
+                                                <button
+                                                    onClick={() => handleEdit(sale)}
+                                                    className="p-2 text-gray-600 hover:text-blue-500 hover:bg-blue-500/10 rounded-lg transition-colors md:opacity-0 group-hover:opacity-100"
+                                                >
+                                                    <Pencil className="w-4 h-4 md:w-5 md:h-5" />
+                                                </button>
+                                                <button
+                                                    onClick={() => handleDelete(sale.id)}
+                                                    className="p-2 text-gray-600 hover:text-red-500 hover:bg-red-500/10 rounded-lg transition-colors md:opacity-0 group-hover:opacity-100"
+                                                >
+                                                    <Trash2 className="w-4 h-4 md:w-5 md:h-5" />
+                                                </button>
+                                            </div>
                                         </div>
-                                    </div>
-                                ))}
-                            </div>
-                        )}
-                    </div>
-                )}
-            </div>
-        </div>
+                                    ))}
+                                </div>
+                            )}
+                        </div>
+                    )
+                }
+            </div >
+        </div >
     );
 }

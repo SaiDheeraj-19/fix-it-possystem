@@ -24,9 +24,19 @@ export default async function DashboardPage() {
                         <p className="text-gray-400 text-xs md:text-sm capitalize font-medium">Logged in as {(session as any).username} {((session as any).role as string)?.toLowerCase()}</p>
                     </div>
                 </div>
-                <a href="/api/auth/logout" className="bg-red-500/10 hover:bg-red-500/20 text-red-500 px-4 py-2 rounded-lg text-xs font-bold transition-colors">
-                    LOGOUT
-                </a>
+                <div className="flex items-center gap-3">
+                    <a
+                        href="https://www.fixitkurnool.in/admin"
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="bg-blue-500/10 hover:bg-blue-500/20 text-blue-500 px-4 py-2 rounded-lg text-xs font-bold transition-colors border border-blue-500/20"
+                    >
+                        FIXIT STORE
+                    </a>
+                    <a href="/api/auth/logout" className="bg-red-500/10 hover:bg-red-500/20 text-red-500 px-4 py-2 rounded-lg text-xs font-bold transition-colors">
+                        LOGOUT
+                    </a>
+                </div>
             </header>
 
             <main>
