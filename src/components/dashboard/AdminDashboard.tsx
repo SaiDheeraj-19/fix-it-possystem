@@ -11,6 +11,12 @@ import { AdminWelcomeScreen } from '@/components/dashboard/AdminWelcomeScreen';
 interface DashboardData {
     revenue: number;
     todayRevenue: number;
+    todayCash: number;
+    todayUPI: number;
+    todayCard: number;
+    periodCash: number;
+    periodUPI: number;
+    periodCard: number;
     pendingBalance: number;
     activeRepairs: number;
     repairsThisMonth: number;
@@ -73,7 +79,7 @@ export function AdminDashboard() {
 
     if (!data) return <div className="text-white">Failed to load data</div>;
 
-    const formatCurrency = (amount: number) => `Rs. ${amount.toLocaleString('en-IN')}`;
+    const formatCurrency = (amount?: number) => `Rs. ${(amount || 0).toLocaleString('en-IN')}`;
 
     return (
         <div className="space-y-6">
@@ -93,9 +99,27 @@ export function AdminDashboard() {
                     <div className="relative z-10">
                         <p className="text-blue-200 font-medium mb-1">Today's Revenue</p>
                         <h3 className="text-5xl font-bold text-white tracking-tight">{formatCurrency(data.todayRevenue)}</h3>
-                        <div className="flex items-center gap-2 mt-4 text-blue-300/80 text-sm">
+                        <div className="flex items-center gap-2 mt-4 text-blue-300/80 text-sm mb-4">
                             <Calendar className="w-4 h-4" />
                             {new Date().toLocaleDateString('en-IN', { weekday: 'long', day: 'numeric', month: 'long', timeZone: 'Asia/Kolkata' })}
+                        </div>
+
+                        {/* Revenue Split */}
+                        <div className="flex gap-3">
+                            <div className="flex flex-col">
+                                <span className="text-[10px] text-green-400 font-bold uppercase tracking-wider">Cash</span>
+                                <span className="text-sm font-semibold text-white">{formatCurrency(data.todayCash)}</span>
+                            </div>
+                            <div className="w-px h-8 bg-white/10"></div>
+                            <div className="flex flex-col">
+                                <span className="text-[10px] text-purple-400 font-bold uppercase tracking-wider">UPI</span>
+                                <span className="text-sm font-semibold text-white">{formatCurrency(data.todayUPI)}</span>
+                            </div>
+                            <div className="w-px h-8 bg-white/10"></div>
+                            <div className="flex flex-col">
+                                <span className="text-[10px] text-orange-400 font-bold uppercase tracking-wider">Card</span>
+                                <span className="text-sm font-semibold text-white">{formatCurrency(data.todayCard)}</span>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -133,7 +157,20 @@ export function AdminDashboard() {
                     <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-8">
                         <div>
                             <h3 className="text-lg font-semibold text-gray-200">Revenue Analytics</h3>
-                            <p className="text-sm text-gray-500">Track earnings by time or category.</p>
+                            <div className="flex gap-4 mt-2">
+                                <div className="flex items-center gap-1.5">
+                                    <div className="w-2 h-2 rounded-full bg-green-500"></div>
+                                    <span className="text-xs text-gray-400">Cash: <span className="text-gray-200 font-bold">{formatCurrency(data.periodCash)}</span></span>
+                                </div>
+                                <div className="flex items-center gap-1.5">
+                                    <div className="w-2 h-2 rounded-full bg-purple-500"></div>
+                                    <span className="text-xs text-gray-400">UPI: <span className="text-gray-200 font-bold">{formatCurrency(data.periodUPI)}</span></span>
+                                </div>
+                                <div className="flex items-center gap-1.5">
+                                    <div className="w-2 h-2 rounded-full bg-orange-500"></div>
+                                    <span className="text-xs text-gray-400">Card: <span className="text-gray-200 font-bold">{formatCurrency(data.periodCard)}</span></span>
+                                </div>
+                            </div>
                         </div>
                         <div className="flex items-center gap-4">
                             {/* View Type Toggle */}

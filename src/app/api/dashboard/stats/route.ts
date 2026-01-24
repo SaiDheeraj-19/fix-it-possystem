@@ -151,9 +151,89 @@ export async function GET(request: Request) {
                     // Empty array is fine, UI handles it or shows placeholder
                 }
 
+                // --- TODAY SPLIT (CASH vs UPI) ---
+                const todayRes = await query(`
+                    WITH TodaySales AS (
+                        SELECT payment_mode, total_price as amount
+                        FROM sales
+                        WHERE (created_at AT TIME ZONE 'UTC' AT TIME ZONE 'Asia/Kolkata')::DATE = (CURRENT_TIMESTAMP AT TIME ZONE 'Asia/Kolkata')::DATE
+                    ),
+                    TodayRepairs AS (
+                        -- Advances
+                        SELECT payment_mode_advance as payment_mode, advance as amount
+                        FROM repairs
+                        WHERE (created_at AT TIME ZONE 'UTC' AT TIME ZONE 'Asia/Kolkata')::DATE = (CURRENT_TIMESTAMP AT TIME ZONE 'Asia/Kolkata')::DATE
+                        
+                        UNION ALL
+                        
+                        -- Balances
+                        SELECT payment_mode_balance as payment_mode, (estimated_cost - advance) as amount
+                        FROM repairs
+                        WHERE balance_collected_at IS NOT NULL 
+                        AND (balance_collected_at AT TIME ZONE 'UTC' AT TIME ZONE 'Asia/Kolkata')::DATE = (CURRENT_TIMESTAMP AT TIME ZONE 'Asia/Kolkata')::DATE
+                    ),
+                    CombinedToday AS (
+                        SELECT payment_mode, amount FROM TodaySales
+                        UNION ALL
+                        SELECT payment_mode, amount FROM TodayRepairs
+                    )
+                    SELECT 
+                        SUM(CASE WHEN payment_mode = 'CASH' THEN amount ELSE 0 END) as cash,
+                        SUM(CASE WHEN payment_mode = 'UPI' THEN amount ELSE 0 END) as upi,
+                        SUM(CASE WHEN payment_mode = 'CARD' THEN amount ELSE 0 END) as card
+                    FROM CombinedToday
+                `);
+
+                const todayCash = parseFloat(todayRes.rows[0]?.cash || 0);
+                const todayUPI = parseFloat(todayRes.rows[0]?.upi || 0);
+                const todayCard = parseFloat(todayRes.rows[0]?.card || 0);
+
+
+                // --- PERIOD BREAKDOWN (CASH vs UPI vs CARD for the chart period) ---
+                const periodBreakdownRes = await query(`
+                    WITH PeriodSales AS (
+                        SELECT payment_mode, total_price as amount
+                        FROM sales
+                        WHERE created_at >= (CURRENT_TIMESTAMP AT TIME ZONE 'Asia/Kolkata') - INTERVAL '${startDateInterval}'
+                    ),
+                    PeriodRepairs AS (
+                        -- Advances
+                        SELECT payment_mode_advance as payment_mode, advance as amount
+                        FROM repairs
+                        WHERE created_at >= (CURRENT_TIMESTAMP AT TIME ZONE 'Asia/Kolkata') - INTERVAL '${startDateInterval}'
+                        
+                        UNION ALL
+                        
+                        -- Balances
+                        SELECT payment_mode_balance as payment_mode, (estimated_cost - advance) as amount
+                        FROM repairs
+                        WHERE balance_collected_at >= (CURRENT_TIMESTAMP AT TIME ZONE 'Asia/Kolkata') - INTERVAL '${startDateInterval}'
+                    ),
+                    CombinedPeriod AS (
+                        SELECT payment_mode, amount FROM PeriodSales
+                        UNION ALL
+                        SELECT payment_mode, amount FROM PeriodRepairs
+                    )
+                    SELECT 
+                        SUM(CASE WHEN payment_mode = 'CASH' THEN amount ELSE 0 END) as cash,
+                        SUM(CASE WHEN payment_mode = 'UPI' THEN amount ELSE 0 END) as upi,
+                        SUM(CASE WHEN payment_mode = 'CARD' THEN amount ELSE 0 END) as card
+                    FROM CombinedPeriod
+                `);
+
+                const periodCash = parseFloat(periodBreakdownRes.rows[0]?.cash || 0);
+                const periodUPI = parseFloat(periodBreakdownRes.rows[0]?.upi || 0);
+                const periodCard = parseFloat(periodBreakdownRes.rows[0]?.card || 0);
+
                 return NextResponse.json({
                     revenue,
                     todayRevenue,
+                    todayCash,
+                    todayUPI,
+                    todayCard,
+                    periodCash,
+                    periodUPI,
+                    periodCard,
                     pendingBalance,
                     activeRepairs,
                     repairsThisMonth,
@@ -170,6 +250,12 @@ export async function GET(request: Request) {
         return NextResponse.json({
             revenue: 0,
             todayRevenue: 0,
+            todayCash: 0,
+            todayUPI: 0,
+            todayCard: 0,
+            periodCash: 0,
+            periodUPI: 0,
+            periodCard: 0,
             pendingBalance: 0,
             activeRepairs: 0,
             repairsThisMonth: 0,

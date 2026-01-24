@@ -41,18 +41,28 @@ const ImageUploadBox = ({ label, onUpload, id }: { label: string, onUpload: (e: 
     </div>
 );
 
-export function NewRepairForm({ userId }: { userId: string }) {
+export function NewRepairForm({ userId, initialData, repairId }: { userId: string, initialData?: any, repairId?: string }) {
     const router = useRouter();
-    const { register, handleSubmit, watch, formState: { errors, isSubmitting } } = useForm<RepairFormData>({
-        defaultValues: { warrantyDays: "" }
+    const { register, handleSubmit, watch, setValue, formState: { errors, isSubmitting } } = useForm<RepairFormData>({
+        defaultValues: {
+            customerName: initialData?.customer_name || "",
+            customerMobile: initialData?.customer_phone || "",
+            deviceBrand: initialData?.device_brand || "",
+            deviceModel: initialData?.device_model || "",
+            imei: initialData?.imei || "",
+            problem: initialData?.problem || "",
+            estimatedCost: initialData?.estimated_cost || 0,
+            advance: initialData?.advance || 0,
+            warrantyDays: initialData?.warranty || ""
+        }
     });
 
     // Security State
-    const [securityValue, setSecurityValue] = useState("");
+    const [securityValue, setSecurityValue] = useState(""); // We don't pre-fill security for now as it's encrypted and hard to show back directly in pattern lock unless decrypted fully passed.
     const [securityMode, setSecurityMode] = useState<"PATTERN" | "PIN" | "PASSWORD" | "NONE">("PATTERN");
 
-    // Dynamic Images State
-    const [images, setImages] = useState<string[]>([]);
+    // Pre-fill images
+    const [images, setImages] = useState<string[]>(initialData?.images || []);
     const [showSuccess, setShowSuccess] = useState(false);
     const [savedData, setSavedData] = useState<any>(null);
 
@@ -127,13 +137,33 @@ export function NewRepairForm({ userId }: { userId: string }) {
                 userId
             };
 
-            const res = await fetch('/api/repairs', {
+            let res;
+            let result;
+
+            if (repairId) {
+                // Update Mode
+                res = await fetch(`/api/repairs/${repairId}`, {
+                    method: 'PUT',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
+                result = await res.json();
+                if (!res.ok) throw new Error(result.error || 'Failed to update repair');
+
+                // For updates, maybe redirect back to details?
+                setSavedData({ ...data, repairId: repairId });
+                setShowSuccess(true);
+                return;
+            }
+
+            // Create Mode
+            res = await fetch('/api/repairs', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify(payload)
             });
 
-            const result = await res.json();
+            result = await res.json();
             if (!res.ok) throw new Error(result.error || 'Failed to create repair');
 
             // Save invoice to database (optional, for record)
@@ -186,14 +216,14 @@ export function NewRepairForm({ userId }: { userId: string }) {
         return (
             <div className="bg-gray-900 border border-gray-700 rounded-2xl p-8 text-center">
                 <CheckCircle className="w-16 h-16 text-green-500 mx-auto mb-4" />
-                <h2 className="text-2xl font-bold text-white mb-2">Repair Created Successfully!</h2>
+                <h2 className="text-2xl font-bold text-white mb-2">{repairId ? 'Repair Updated Successfully!' : 'Repair Created Successfully!'}</h2>
                 <p className="text-gray-400 mb-6">Order ID: {savedData?.repairId?.slice(0, 8)}</p>
                 <div className="flex gap-4 justify-center">
                     <button onClick={handlePrintInvoice} className="flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-xl font-semibold">
                         <Printer className="w-5 h-5" /> Print Invoice
                     </button>
-                    <button onClick={() => router.push('/dashboard')} className="bg-gray-700 hover:bg-gray-600 text-white px-6 py-3 rounded-xl font-semibold">
-                        Back to Dashboard
+                    <button onClick={() => router.push(repairId ? `/repairs/${repairId}` : '/dashboard')} className="bg-gray-700 hover:bg-gray-600 text-white px-6 py-3 rounded-xl font-semibold">
+                        {repairId ? 'Back to Order' : 'Back to Dashboard'}
                     </button>
                 </div>
             </div>
@@ -334,7 +364,7 @@ export function NewRepairForm({ userId }: { userId: string }) {
             <div className="pt-4 pb-12">
                 <Button type="submit" disabled={isSubmitting} className="w-full h-14 text-lg bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-xl shadow-lg">
                     {isSubmitting ? <Loader2 className="animate-spin mr-2" /> : <Smartphone className="mr-2" />}
-                    CREATE REPAIR ORDER
+                    {repairId ? 'UPDATE REPAIR ORDER' : 'CREATE REPAIR ORDER'}
                 </Button>
             </div>
         </form>

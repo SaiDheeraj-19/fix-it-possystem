@@ -24,10 +24,21 @@ export async function PATCH(
             return NextResponse.json({ error: 'Invalid status' }, { status: 400 });
         }
 
-        await query(
-            'UPDATE repairs SET status = $1 WHERE id = $2',
-            [status, params.id]
-        );
+        if (status === 'DELIVERED') {
+            await query(
+                `UPDATE repairs 
+                SET status = $1, 
+                    balance_collected_at = COALESCE(balance_collected_at, CURRENT_TIMESTAMP),
+                    payment_mode_balance = COALESCE(payment_mode_balance, 'CASH')
+                WHERE id = $2`,
+                [status, params.id]
+            );
+        } else {
+            await query(
+                'UPDATE repairs SET status = $1 WHERE id = $2',
+                [status, params.id]
+            );
+        }
 
         return NextResponse.json({ success: true, status });
 

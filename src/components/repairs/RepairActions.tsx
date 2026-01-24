@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { Printer, CheckCircle, Truck, XCircle, Clock, Trash2, Wallet } from 'lucide-react';
+import { Printer, CheckCircle, Truck, XCircle, Clock, Trash2, Wallet, Pencil } from 'lucide-react';
 import { openInvoiceForPrint } from '@/lib/invoice';
 
 interface RepairActionsProps {
@@ -136,17 +136,12 @@ export function RepairActions({ repairId, currentStatus, repair }: RepairActions
                     Print Invoice
                 </button>
 
-                {/* Collect Balance Button */}
+                {/* Collect Balance Button Removed as per request (Auto-collects on Delivery) */}
+                {/* 
                 {balance > 0 && !isBalanceCollected && currentStatus !== 'CANCELLED' && (
-                    <button
-                        onClick={collectBalance}
-                        disabled={loading}
-                        className="flex items-center justify-center gap-2 bg-purple-600 hover:bg-purple-700 text-white px-4 py-3 rounded-xl font-bold transition-all active:scale-95"
-                    >
-                        <Wallet className="w-5 h-5" />
-                        Collect Balance
-                    </button>
-                )}
+                    <button ... > ... </button>
+                )} 
+                */}
 
                 {balance > 0 && isBalanceCollected && (
                     <div className="flex items-center justify-center gap-2 bg-purple-900/30 text-purple-400 px-4 py-3 rounded-xl font-bold border border-purple-500/30">
@@ -169,6 +164,16 @@ export function RepairActions({ repairId, currentStatus, repair }: RepairActions
                         </button>
                     )
                 ))}
+
+                {/* Edit Button */}
+                <button
+                    onClick={() => router.push(`/repairs/${repairId}/edit`)}
+                    disabled={loading}
+                    className="flex items-center justify-center gap-2 bg-blue-900/20 hover:bg-blue-900/40 text-blue-500 px-4 py-3 rounded-xl font-bold transition-all border border-blue-900/50"
+                >
+                    <Pencil className="w-5 h-5" />
+                    Edit Order
+                </button>
 
                 {/* Delete Button */}
                 <button

@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
-import { ArrowLeft, Loader2, ShoppingCart, Tag, User, Phone, Package, Plus, Search, Trash2 } from 'lucide-react';
+import { ArrowLeft, Loader2, ShoppingCart, Tag, User, Phone, Package, Plus, Search, Trash2, Pencil } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 
 export default function SalesPage() {
@@ -15,11 +15,11 @@ export default function SalesPage() {
         category: 'Accessories',
         quantity: 1,
         price: '',
-        customerName: '',
-        customerPhone: ''
+        paymentMode: 'CASH'
     });
 
     const [customCategory, setCustomCategory] = useState('');
+    const [editingId, setEditingId] = useState<string | null>(null);
 
     const categories = ['Accessories', 'Tempered Glass', 'Back Cover', 'Charger/Cable', 'Components', , 'Add'];
 
@@ -52,14 +52,23 @@ export default function SalesPage() {
         }
 
         try {
-            const res = await fetch('/api/sales', {
-                method: 'POST',
+            const url = editingId ? '/api/sales' : '/api/sales';
+            const method = editingId ? 'PUT' : 'POST';
+
+            const payload = {
+                ...formData,
+                category: finalCategory,
+                price: parseFloat(formData.price)
+            };
+
+            if (editingId) {
+                (payload as any).id = editingId;
+            }
+
+            const res = await fetch(url, {
+                method: method,
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    ...formData,
-                    category: finalCategory,
-                    price: parseFloat(formData.price)
-                })
+                body: JSON.stringify(payload)
             });
             if (res.ok) {
                 setShowAddForm(false);
@@ -68,10 +77,17 @@ export default function SalesPage() {
                     category: 'Accessories',
                     quantity: 1,
                     price: '',
-                    customerName: '',
-                    customerPhone: ''
+                    paymentMode: 'CASH'
+                });
+                setFormData({
+                    itemName: '',
+                    category: 'Accessories',
+                    quantity: 1,
+                    price: '',
+                    paymentMode: 'CASH'
                 });
                 setCustomCategory('');
+                setEditingId(null);
                 fetchSales();
             } else {
                 const data = await res.json();
@@ -98,6 +114,18 @@ export default function SalesPage() {
         }
     };
 
+    const handleEdit = (sale: any) => {
+        setFormData({
+            itemName: sale.item_name,
+            category: sale.category,
+            quantity: sale.quantity,
+            price: sale.price_per_unit,
+            paymentMode: sale.payment_mode || 'CASH'
+        });
+        setEditingId(sale.id);
+        setShowAddForm(true);
+    };
+
     return (
         <div className="min-h-screen bg-black text-white p-6">
             <div className="max-w-6xl mx-auto">
@@ -113,7 +141,17 @@ export default function SalesPage() {
                     </div>
 
                     <Button
-                        onClick={() => setShowAddForm(true)}
+                        onClick={() => {
+                            setEditingId(null);
+                            setFormData({
+                                itemName: '',
+                                category: 'Accessories',
+                                quantity: 1,
+                                price: '',
+                                paymentMode: 'CASH'
+                            });
+                            setShowAddForm(true);
+                        }}
                         className="bg-green-600 hover:bg-green-700 h-11 px-6 rounded-xl font-semibold shadow-lg shadow-green-900/20"
                     >
                         <Plus className="w-5 h-5 mr-2" /> New Quick Sale
@@ -127,7 +165,7 @@ export default function SalesPage() {
                                 <div className="p-3 bg-green-500/10 rounded-xl">
                                     <ShoppingCart className="w-6 h-6 text-green-400" />
                                 </div>
-                                <h2 className="text-2xl font-bold">Record Sale</h2>
+                                <h2 className="text-2xl font-bold">{editingId ? 'Edit Sale' : 'Record Sale'}</h2>
                             </div>
 
                             <div className="space-y-4">
@@ -204,21 +242,19 @@ export default function SalesPage() {
                                     </div>
                                 </div>
 
-                                <div className="pt-2">
-                                    <label className="text-sm font-medium text-gray-400 mb-1 block italic whitespace-nowrap overflow-hidden text-ellipsis">Customer Details (Optional)</label>
-                                    <div className="grid grid-cols-2 gap-4">
-                                        <input
-                                            className="w-full bg-black border border-gray-700 rounded-xl p-3 text-sm focus:border-green-500 outline-none"
-                                            placeholder="Name"
-                                            value={formData.customerName}
-                                            onChange={e => setFormData({ ...formData, customerName: e.target.value })}
-                                        />
-                                        <input
-                                            className="w-full bg-black border border-gray-700 rounded-xl p-3 text-sm focus:border-green-500 outline-none"
-                                            placeholder="Mobile"
-                                            value={formData.customerPhone}
-                                            onChange={e => setFormData({ ...formData, customerPhone: e.target.value })}
-                                        />
+                                <div>
+                                    <label className="text-sm font-medium text-gray-400 mb-1 block">Payment Mode</label>
+                                    <div className="grid grid-cols-3 gap-3">
+                                        {['CASH', 'UPI', 'CARD'].map(mode => (
+                                            <button
+                                                key={mode}
+                                                type="button"
+                                                onClick={() => setFormData({ ...formData, paymentMode: mode })}
+                                                className={`p-3 rounded-xl text-sm font-bold transition-all border ${formData.paymentMode === mode ? 'bg-green-600 border-green-500 text-white shadow-lg shadow-green-900/40 scale-105' : 'bg-black border-gray-700 text-gray-400 hover:bg-gray-800'}`}
+                                            >
+                                                {mode}
+                                            </button>
+                                        ))}
                                     </div>
                                 </div>
                             </div>
@@ -237,7 +273,7 @@ export default function SalesPage() {
                                     disabled={submitting}
                                     className="flex-1 h-12 bg-green-600 hover:bg-green-700 rounded-xl font-bold"
                                 >
-                                    {submitting ? <Loader2 className="animate-spin" /> : 'Confirm Sale'}
+                                    {submitting ? <Loader2 className="animate-spin" /> : (editingId ? 'Update Sale' : 'Confirm Sale')}
                                 </Button>
                             </div>
                         </form>
@@ -278,13 +314,21 @@ export default function SalesPage() {
                                                 <div className="text-xl md:text-2xl font-black text-white">Rs. {parseFloat(sale.total_price).toLocaleString('en-IN')}</div>
                                                 <div className="flex items-center gap-2 text-[10px] text-gray-600 font-medium">
                                                     <div className="flex items-center gap-1">
-                                                        <User className="w-3 h-3" /> {sale.customer_name || 'Walk-in'}
+                                                        <span className={`px-1.5 py-0.5 rounded text-[10px] font-bold ${sale.payment_mode === 'UPI' ? 'bg-purple-500/20 text-purple-400' : sale.payment_mode === 'CARD' ? 'bg-orange-500/20 text-orange-400' : 'bg-green-500/20 text-green-400'}`}>
+                                                            {sale.payment_mode || 'CASH'}
+                                                        </span>
                                                     </div>
                                                     <span>•</span>
                                                     <div>{new Date(sale.created_at).toLocaleDateString('en-IN', { timeZone: 'Asia/Kolkata', day: '2-digit', month: 'short' })}</div>
                                                 </div>
                                             </div>
 
+                                            <button
+                                                onClick={() => handleEdit(sale)}
+                                                className="p-2 text-gray-600 hover:text-blue-500 hover:bg-blue-500/10 rounded-lg transition-colors md:opacity-0 group-hover:opacity-100"
+                                            >
+                                                <Pencil className="w-4 h-4 md:w-5 md:h-5" />
+                                            </button>
                                             <button
                                                 onClick={() => handleDelete(sale.id)}
                                                 className="p-2 text-gray-600 hover:text-red-500 hover:bg-red-500/10 rounded-lg transition-colors md:opacity-0 group-hover:opacity-100"
