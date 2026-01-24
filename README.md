@@ -86,4 +86,4 @@
 
 ---
 
-Developed with ❤️ by the **FIX IT** Engineering Team.
+Developed with ❤️ by the **FIX IT** Engineer 👷 .
