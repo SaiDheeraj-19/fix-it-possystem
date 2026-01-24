@@ -23,9 +23,12 @@ export default function RootLayout({
         <html lang="en">
             <body className={inter.className}>
                 {children}
-                <footer className="py-6 text-center bg-black">
+                <footer className="py-6 text-center bg-black space-y-2">
                     <p className="text-[10px] text-gray-800 uppercase tracking-[0.2em] font-medium">
                         Built, Designed & Developed by <span className="text-gray-700 font-bold">Tech Bro</span>
+                    </p>
+                    <p className="text-[10px] text-gray-900 font-medium">
+                        &copy; {new Date().getFullYear()} FIX IT. All rights reserved.
                     </p>
                 </footer>
             </body>
