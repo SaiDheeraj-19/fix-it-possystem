@@ -2,9 +2,12 @@ import { getSession } from '@/lib/auth';
 import { redirect } from 'next/navigation';
 import { AdminDashboard } from '@/components/dashboard/AdminDashboard';
 import { StaffDashboard } from '@/components/dashboard/StaffDashboard';
+import { AnniversaryPopup, AnniversaryBanner } from '@/components/AnniversaryCelebration';
+import { RepublicDayPopup, RepublicDayBanner } from '@/components/RepublicDayCelebration';
 
 export default async function DashboardPage() {
     const session = await getSession();
+    // const session = { role: 'ADMIN', username: 'PreviewUser' }; // Mock session
 
     if (!session) {
         redirect('/');
@@ -13,6 +16,8 @@ export default async function DashboardPage() {
     // Strictly enforce hard rules: Admin gets analytics, Staff gets ops.
     return (
         <div className="min-h-screen bg-black text-white p-6">
+            <RepublicDayPopup />
+            <AnniversaryPopup />
             <header className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-8 border-b border-gray-800 pb-4">
                 <div className="w-full md:w-auto">
                     <h1 className="text-2xl md:text-3xl font-bold tracking-tight text-blue-500 flex flex-wrap items-baseline gap-2">
@@ -40,6 +45,9 @@ export default async function DashboardPage() {
                     </a>
                 </div>
             </header>
+
+            <RepublicDayBanner />
+            <AnniversaryBanner />
 
             <main>
                 {session.role === 'ADMIN' ? (

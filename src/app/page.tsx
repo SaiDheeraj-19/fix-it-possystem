@@ -35,12 +35,18 @@ export default function LoginPage() {
                 body: JSON.stringify({ username, password }),
             });
 
+            const data = await res.json();
+
             if (res.ok) {
                 // Success Animation wait
                 await new Promise(r => setTimeout(r, 800));
-                router.push('/dashboard');
+
+                if (data.role === 'ADMIN' || data.role === 'STAFF') {
+                    router.push('/dashboard');
+                } else {
+                    router.push('/dashboard');
+                }
             } else {
-                const data = await res.json();
                 setError(data.error || 'Access Denied');
                 setLoading(false);
             }
@@ -103,7 +109,7 @@ export default function LoginPage() {
 
                 {/* Footer Info */}
                 <div className="relative z-10 mt-8 pt-8 border-t border-gray-800 text-xs text-gray-500 flex justify-between">
-                    <span>v2.4.0 (Stable)</span>
+                    <span>v1.1.1 (Stable)</span>
                     <span className="font-mono">{time} UTC+05:30</span>
                 </div>
             </div>

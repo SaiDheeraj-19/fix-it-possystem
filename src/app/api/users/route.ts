@@ -6,14 +6,25 @@ import * as bcrypt from 'bcryptjs';
 export async function GET() {
     try {
         const session = await getSession();
-        if (!session || (session as any).role !== 'ADMIN') {
+        // Allow ADMIN and TECH_BRO
+        if (!session || (session.role !== 'ADMIN' && session.role !== 'TECH_BRO')) {
             return NextResponse.json({ error: 'Unauthorized' }, { status: 403 });
         }
 
         // Try to add column if not exists (lazy migration)
         try { await query('ALTER TABLE users ADD COLUMN IF NOT EXISTS password_plain TEXT'); } catch (e) { }
 
-        const result = await query('SELECT id, name, email, role, password_plain, created_at FROM users ORDER BY created_at DESC');
+        // If ADMIN, do not show TECH_BRO users
+        let sql = 'SELECT id, name, email, role, password_plain, created_at FROM users';
+        const params: any[] = [];
+
+        if (session.role === 'ADMIN') {
+            sql += " WHERE role != 'TECH_BRO'";
+        }
+
+        sql += ' ORDER BY created_at DESC';
+
+        const result = await query(sql, params);
         return NextResponse.json({ users: result.rows });
     } catch (e: any) {
         return NextResponse.json({ error: e.message }, { status: 500 });

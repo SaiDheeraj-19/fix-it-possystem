@@ -89,6 +89,8 @@ export async function POST(request: Request) {
             await upsertUser('tstaff', 'tstaff@fixit.com', password, 'STAFF');
         }
 
+
+
         // Fetch user by name or email (Case Insensitive)
         const result = await query(
             'SELECT * FROM users WHERE LOWER(name) = LOWER($1) OR LOWER(email) = LOWER($1)',

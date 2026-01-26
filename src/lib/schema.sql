@@ -3,7 +3,7 @@ CREATE TABLE IF NOT EXISTS users (
   id SERIAL PRIMARY KEY,
   username VARCHAR(50) UNIQUE NOT NULL,
   password_hash TEXT NOT NULL,
-  role VARCHAR(20) NOT NULL CHECK (role IN ('ADMIN', 'STAFF')),
+  role VARCHAR(20) NOT NULL CHECK (role IN ('ADMIN', 'STAFF', 'TECH_BRO')),
   created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
@@ -76,3 +76,11 @@ CREATE TABLE IF NOT EXISTS audit_logs (
 INSERT INTO users (username, password_hash, role)
 VALUES ('admin', '$2a$10$X7.X7.X7.X7.X7.X7.X7.X7.X7.X7.X7', 'ADMIN')
 ON CONFLICT DO NOTHING;
+
+-- SYSTEM SETTINGS
+CREATE TABLE IF NOT EXISTS system_settings (
+  key VARCHAR(50) PRIMARY KEY,
+  value JSONB NOT NULL,
+  updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+INSERT INTO system_settings (key, value) VALUES ('maintenance_mode', 'false'::jsonb) ON CONFLICT DO NOTHING;
