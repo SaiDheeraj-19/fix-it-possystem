@@ -268,37 +268,37 @@ export function RepublicDayPopup() {
                                 </div>
 
                                 {/* LEFT: VISUAL (WAVING FLAG) */}
-                                <div className="w-full md:w-1/2 relative overflow-hidden bg-gradient-to-br from-[#FF9933]/20 to-black p-12 flex items-center justify-center">
+                                <div className="w-full md:w-1/2 relative overflow-hidden bg-gradient-to-br from-[#FF9933]/20 to-black p-8 md:p-12 flex items-center justify-center">
                                     <motion.div
-                                        className="relative z-10"
+                                        className="relative z-10 w-full flex justify-center"
                                         initial={{ y: 50, opacity: 0 }}
                                         animate={{ y: 0, opacity: 1 }}
                                         transition={{ delay: 0.5, duration: 1 }}
                                     >
                                         {/* Real SVG Flag with CSS Wave Animation */}
-                                        <div className="flag-wave-container w-[350px]">
+                                        <div className="flag-wave-container w-full max-w-[280px] md:max-w-[350px]">
                                             {/* Glimmer effect for ripple */}
                                             <div className="flag-glimmer z-20"></div>
                                             <img src="https://upload.wikimedia.org/wikipedia/en/4/41/Flag_of_India.svg" className="w-full h-auto object-cover border-2 border-white/5" alt="Flag" />
                                         </div>
                                         {/* Reflection on 'floor' */}
-                                        <div className="h-16 w-full bg-gradient-to-b from-white/10 to-transparent transform scale-y-[-1] opacity-30 mask-image-b blur-sm mt-4 rounded-full"></div>
+                                        <div className="h-12 md:h-16 w-full bg-gradient-to-b from-white/10 to-transparent transform scale-y-[-1] opacity-30 mask-image-b blur-sm mt-4 rounded-full"></div>
                                     </motion.div>
                                 </div>
 
                                 {/* RIGHT: TEXT */}
-                                <div className="w-full md:w-1/2 p-12 flex flex-col justify-center text-left">
+                                <div className="w-full md:w-1/2 p-8 md:p-12 flex flex-col justify-center text-left">
                                     <motion.div
                                         initial={{ opacity: 0, x: 20 }}
                                         animate={{ opacity: 1, x: 0 }}
                                         transition={{ delay: 1 }}
                                     >
-                                        <h4 className="text-[#FF9933] font-bold tracking-[0.2em] uppercase mb-2 text-sm">26 January 2026</h4>
-                                        <h1 className="text-5xl md:text-6xl font-black text-white leading-tight mb-6">
+                                        <h4 className="text-[#FF9933] font-bold tracking-[0.2em] uppercase mb-2 text-xs md:text-sm">26 January 2026</h4>
+                                        <h1 className="text-4xl md:text-6xl font-black text-white leading-tight mb-4 md:mb-6">
                                             Happy<br />
                                             <span className="text-transparent bg-clip-text bg-gradient-to-r from-[#FF9933] via-white to-[#138808]">Republic Day</span>
                                         </h1>
-                                        <p className="text-gray-400 font-light text-lg leading-relaxed mb-8 max-w-md">
+                                        <p className="text-gray-400 font-light text-base md:text-lg leading-relaxed mb-6 md:mb-8 max-w-md">
                                             Honoring the Constitution that unites us all. Today, we celebrate the spirit of justice, liberty, and equality.
                                         </p>
 
@@ -306,7 +306,7 @@ export function RepublicDayPopup() {
                                             whileHover={{ scale: 1.05 }}
                                             whileTap={{ scale: 0.95 }}
                                             onClick={() => setStage('exit')}
-                                            className="group relative px-8 py-4 bg-white text-black font-bold text-sm tracking-widest uppercase rounded-sm overflow-hidden"
+                                            className="group relative px-6 py-3 md:px-8 md:py-4 bg-white text-black font-bold text-xs md:text-sm tracking-widest uppercase rounded-sm overflow-hidden"
                                         >
                                             <span className="relative z-10 flex items-center gap-3">
                                                 Jai Hind

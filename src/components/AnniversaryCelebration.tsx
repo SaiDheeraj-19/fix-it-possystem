@@ -203,13 +203,13 @@ export function AnniversaryPopup() {
                         className="relative z-20 text-center"
                     >
                         <div className="absolute inset-0 bg-gradient-to-r from-yellow-500 to-orange-600 blur-[80px] opacity-50 rounded-full"></div>
-                        <h1 className="text-[200px] leading-none font-bold text-transparent bg-clip-text bg-gradient-to-b from-yellow-300 via-yellow-500 to-orange-600 drop-shadow-[0_0_50px_rgba(234,179,8,0.8)] font-serif-display">
+                        <h1 className="text-[120px] md:text-[200px] leading-none font-bold text-transparent bg-clip-text bg-gradient-to-b from-yellow-300 via-yellow-500 to-orange-600 drop-shadow-[0_0_50px_rgba(234,179,8,0.8)] font-serif-display">
                             3
                         </h1>
                         <motion.p
                             initial={{ y: 20, opacity: 0 }}
                             animate={{ y: 0, opacity: 1 }}
-                            className="text-white font-serif-display text-2xl tracking-[0.5em] uppercase"
+                            className="text-white font-serif-display text-xl md:text-2xl tracking-[0.5em] uppercase"
                         >
                             Years
                         </motion.p>
@@ -233,7 +233,7 @@ export function AnniversaryPopup() {
                             className="mb-6 mx-auto w-16 h-1 bg-gradient-to-r from-transparent via-blue-500 to-transparent"
                         />
 
-                        <h2 className="text-4xl md:text-5xl font-serif-display text-white mb-6 leading-tight">
+                        <h2 className="text-3xl md:text-5xl font-serif-display text-white mb-6 leading-tight">
                             "Success is the sum of small efforts repeated day in and day out."
                         </h2>
 
@@ -243,8 +243,8 @@ export function AnniversaryPopup() {
                             transition={{ delay: 1 }}
                             className="flex flex-col items-center gap-2"
                         >
-                            <p className="text-gray-400 font-script text-3xl">With Best Wishes,</p>
-                            <p className="text-blue-400 font-bold text-xl tracking-widest uppercase border-b border-blue-500/30 pb-1">
+                            <p className="text-gray-400 font-script text-2xl md:text-3xl">With Best Wishes,</p>
+                            <p className="text-blue-400 font-bold text-lg md:text-xl tracking-widest uppercase border-b border-blue-500/30 pb-1">
                                 Tech Bro
                             </p>
                         </motion.div>
@@ -259,7 +259,7 @@ export function AnniversaryPopup() {
                         animate={{ scale: 1, opacity: 1, y: 0 }}
                         exit={{ opacity: 0, scale: 0.8 }}
                         transition={{ type: "spring", damping: 15 }}
-                        className="relative max-w-lg w-full p-8 mx-4 bg-gray-900 border border-yellow-500/30 rounded-3xl shadow-[0_0_100px_rgba(0,0,0,0.8)] overflow-hidden"
+                        className="relative max-w-lg w-full p-6 md:p-8 mx-4 bg-gray-900 border border-yellow-500/30 rounded-3xl shadow-[0_0_100px_rgba(0,0,0,0.8)] overflow-hidden"
                     >
                         {/* Background FX */}
                         <div className="absolute inset-0 z-0">
@@ -318,7 +318,7 @@ export function AnniversaryPopup() {
                     </motion.div>
                 )}
             </motion.div>
-        </AnimatePresence>
+        </AnimatePresence >
     );
 }
 
