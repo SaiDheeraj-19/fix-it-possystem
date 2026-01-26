@@ -161,24 +161,25 @@ export function RepublicDayPopup() {
     // JS removed 'jets' from stage
     const [stage, setStage] = useState<'idle' | 'black' | 'text1' | 'text2' | 'main' | 'exit'>('idle');
 
-    // Skip intro, go straight to main card
+    // Start Intro Sequence
     useEffect(() => {
-        const hasShown = sessionStorage.getItem("cinematic_rd_2026_v3");
-        if (isRepublicDay && !hasShown) setStage('main');
+        const hasShown = sessionStorage.getItem("cinematic_rd_2026_v4");
+        if (isRepublicDay && !hasShown) setStage('black');
     }, [isRepublicDay]);
 
     useEffect(() => {
-        // Replay also skips intro now if requested, or we can keep intro for replay? 
-        // User said "remove the start", implying they don't like it. Let's just go to main.
-        const replay = () => { if (isRepublicDay) setStage('main'); };
+        const replay = () => { if (isRepublicDay) setStage('black'); };
         window.addEventListener('replay-cinematic', replay);
         return () => window.removeEventListener('replay-cinematic', replay);
     }, [isRepublicDay]);
 
-    // Timeline - Simplified
+    // Timeline
     useEffect(() => {
-        if (stage === 'main') {
-            sessionStorage.setItem("cinematic_rd_2026_v3", "true");
+        if (stage === 'black') setTimeout(() => setStage('text1'), 1500);
+        else if (stage === 'text1') setTimeout(() => setStage('text2'), 3000);
+        else if (stage === 'text2') setTimeout(() => setStage('main'), 3000);
+        else if (stage === 'main') {
+            sessionStorage.setItem("cinematic_rd_2026_v4", "true");
         }
     }, [stage]);
 
