@@ -80,3 +80,37 @@ export async function DELETE(request: Request) {
         return NextResponse.json({ error: 'Failed to delete expenditure', details: error.message }, { status: 500 });
     }
 }
+
+export async function PUT(request: Request) {
+    try {
+        const body = await request.json();
+        const { id, category, amount, description, date } = body;
+
+        if (!id || !amount) {
+            return NextResponse.json({ error: 'ID and amount are required' }, { status: 400 });
+        }
+
+        const sql = `
+            UPDATE expenditures 
+            SET category = COALESCE($1, category), 
+                amount = $2, 
+                description = COALESCE($3, description), 
+                date = COALESCE($4, date)
+            WHERE id = $5
+            RETURNING *
+        `;
+
+        const validDate = date ? new Date(date) : null;
+
+        const result = await query(sql, [category || null, amount, description || null, validDate, id]);
+
+        if (result.rowCount === 0) {
+            return NextResponse.json({ error: 'Expenditure not found' }, { status: 404 });
+        }
+
+        return NextResponse.json(result.rows[0]);
+    } catch (error: any) {
+        console.error('Error updating expenditure:', error);
+        return NextResponse.json({ error: 'Failed to update expenditure', details: error.message }, { status: 500 });
+    }
+}
