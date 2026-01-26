@@ -309,7 +309,7 @@ export function RepublicDayPopup() {
                                             className="group relative px-8 py-4 bg-white text-black font-bold text-sm tracking-widest uppercase rounded-sm overflow-hidden"
                                         >
                                             <span className="relative z-10 flex items-center gap-3">
-                                                Jai Hind <Star className="w-4 h-4 text-[#000080]" fill="navy" />
+                                                Jai Hind
                                             </span>
                                             <div className="absolute inset-0 bg-gradient-to-r from-[#FF9933] via-white to-[#138808] opacity-0 group-hover:opacity-20 transition-opacity"></div>
                                         </motion.button>
