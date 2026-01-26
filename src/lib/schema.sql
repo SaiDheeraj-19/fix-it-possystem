@@ -84,3 +84,14 @@ CREATE TABLE IF NOT EXISTS system_settings (
   updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 INSERT INTO system_settings (key, value) VALUES ('maintenance_mode', 'false'::jsonb) ON CONFLICT DO NOTHING;
+
+-- EXPENDITURES
+CREATE TABLE IF NOT EXISTS expenditures (
+  id SERIAL PRIMARY KEY,
+  category VARCHAR(50) NOT NULL, -- 'STOCK', 'RENT', 'SALARY', 'BILLS', 'OTHER'
+  amount DECIMAL(10, 2) NOT NULL,
+  description TEXT,
+  date TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  created_by UUID REFERENCES users(id),
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);

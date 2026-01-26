@@ -7,6 +7,7 @@ import { DollarSign, TrendingUp, AlertTriangle, Layers, Calendar, FileText, Sett
 
 import { LiveClock } from '@/components/dashboard/LiveClock';
 import { AdminWelcomeScreen } from '@/components/dashboard/AdminWelcomeScreen';
+import { StockUpdateWidget } from '@/components/dashboard/StockUpdateWidget';
 
 interface DashboardData {
     revenue: number;
@@ -22,6 +23,10 @@ interface DashboardData {
     repairsThisMonth: number;
     trendData: { name: string; revenue: number }[];
     categoryData: { name: string; revenue: number }[];
+    periodExpenditure: number;
+    todayExpenditure: number;
+    periodProfit: number;
+    todayProfit: number;
 }
 
 const COLORS = ['#3b82f6', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6', '#ec4899', '#6366f1'];
@@ -149,6 +154,33 @@ export function AdminDashboard() {
                     <div>
                         <p className="text-gray-400 text-sm mb-1">Repair Queue</p>
                         <h3 className="text-2xl font-bold text-white">{data.activeRepairs} Devices</h3>
+                    </div>
+                </div>
+
+                {/* EXPENSE & PROFIT ROW */}
+                <div className="col-span-1 md:col-span-2 bg-gray-900/50 border border-gray-800 rounded-3xl p-6 flex flex-col justify-between hover:border-red-500/30 transition-colors">
+                    <div className="flex justify-between items-start mb-2">
+                        <div className="p-3 bg-red-500/10 rounded-xl">
+                            <TrendingUp className="w-6 h-6 text-red-400 rotate-180" />
+                        </div>
+                        <span className="text-xs font-medium text-red-400 bg-red-500/10 px-2 py-1 rounded-full">{chartPeriod}LY EXPENSE</span>
+                    </div>
+                    <div>
+                        <p className="text-gray-400 text-sm mb-1">Total Expenditure</p>
+                        <h3 className="text-3xl font-bold text-white tracking-tight">{formatCurrency(data.periodExpenditure)}</h3>
+                    </div>
+                </div>
+
+                <div className="col-span-1 md:col-span-2 bg-gray-900/50 border border-gray-800 rounded-3xl p-6 flex flex-col justify-between hover:border-green-500/30 transition-colors">
+                    <div className="flex justify-between items-start mb-2">
+                        <div className="p-3 bg-green-500/10 rounded-xl">
+                            <TrendingUp className="w-6 h-6 text-green-400" />
+                        </div>
+                        <span className="text-xs font-medium text-green-400 bg-green-500/10 px-2 py-1 rounded-full">{chartPeriod}LY PROFIT</span>
+                    </div>
+                    <div>
+                        <p className="text-gray-400 text-sm mb-1">Net Profit</p>
+                        <h3 className="text-3xl font-bold text-white tracking-tight">{formatCurrency(data.periodProfit)}</h3>
                     </div>
                 </div>
 
@@ -305,6 +337,10 @@ export function AdminDashboard() {
                         <div className="w-full bg-gray-800 h-1.5 rounded-full mt-4 overflow-hidden">
                             <div className="bg-purple-500 h-full rounded-full" style={{ width: '100%' }}></div>
                         </div>
+                    </div>
+
+                    <div className="h-[500px]">
+                        <StockUpdateWidget onUpdate={fetchStats} />
                     </div>
                 </div>
             </div>

@@ -225,6 +225,21 @@ export async function GET(request: Request) {
                 const periodUPI = parseFloat(periodBreakdownRes.rows[0]?.upi || 0);
                 const periodCard = parseFloat(periodBreakdownRes.rows[0]?.card || 0);
 
+                // --- EXPENDITURE STATS ---
+                // Calculate expenditures for the same period
+                const expenditureRes = await query(`
+                    SELECT 
+                        COALESCE(SUM(amount), 0) as period_total,
+                        COALESCE(SUM(CASE WHEN (date AT TIME ZONE 'UTC' AT TIME ZONE 'Asia/Kolkata')::DATE = (CURRENT_TIMESTAMP AT TIME ZONE 'Asia/Kolkata')::DATE THEN amount ELSE 0 END), 0) as today_total
+                    FROM expenditures
+                    WHERE date >= (CURRENT_TIMESTAMP AT TIME ZONE 'Asia/Kolkata') - INTERVAL '${startDateInterval}'
+                `);
+
+                const periodExpenditure = parseFloat(expenditureRes.rows[0]?.period_total || 0);
+                const todayExpenditure = parseFloat(expenditureRes.rows[0]?.today_total || 0);
+                const periodProfit = revenue - periodExpenditure;
+                const todayProfit = todayRevenue - todayExpenditure;
+
                 return NextResponse.json({
                     revenue,
                     todayRevenue,
@@ -235,18 +250,29 @@ export async function GET(request: Request) {
                     periodUPI,
                     periodCard,
                     pendingBalance,
+
+                    // New Expenditure Stats
+                    periodExpenditure,
+                    todayExpenditure,
+                    periodProfit,
+                    todayProfit,
+
                     activeRepairs,
                     repairsThisMonth,
                     trendData,
                     categoryData
                 });
-
             }
+
         } catch (err: any) {
-            console.error('Stats query logic error:', err);
+            console.error('Stats query logic error - FULL DETAILS:', err);
+            if (err.message) console.error('Message:', err.message);
+            if (err.stack) console.error('Stack:', err.stack);
+            if (err.detail) console.error('Postgres Detail:', err.detail);
         }
 
         // Fallback response inside catch or if raw query failed
+        console.log('Returning fallback zero-stats due to error.');
         return NextResponse.json({
             revenue: 0,
             todayRevenue: 0,
@@ -257,6 +283,12 @@ export async function GET(request: Request) {
             periodUPI: 0,
             periodCard: 0,
             pendingBalance: 0,
+
+            periodExpenditure: 0,
+            todayExpenditure: 0,
+            periodProfit: 0,
+            todayProfit: 0,
+
             activeRepairs: 0,
             repairsThisMonth: 0,
             trendData: [],
@@ -268,5 +300,3 @@ export async function GET(request: Request) {
         return NextResponse.json({ error: err.message }, { status: 500 });
     }
 }
-
-
