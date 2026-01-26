@@ -294,9 +294,9 @@ export function RepublicDayPopup() {
                                         transition={{ delay: 1 }}
                                     >
                                         <h4 className="text-[#FF9933] font-bold tracking-[0.2em] uppercase mb-2 text-sm">26 January 2026</h4>
-                                        <h1 className="text-4xl md:text-5xl font-black text-white leading-tight mb-6">
-                                            Happy Republic Day<br />
-                                            <span className="text-transparent bg-clip-text bg-gradient-to-r from-[#FF9933] via-white to-[#138808]">Admin, Staff & Tech</span>
+                                        <h1 className="text-5xl md:text-6xl font-black text-white leading-tight mb-6">
+                                            Happy<br />
+                                            <span className="text-transparent bg-clip-text bg-gradient-to-r from-[#FF9933] via-white to-[#138808]">Republic Day</span>
                                         </h1>
                                         <p className="text-gray-400 font-light text-lg leading-relaxed mb-8 max-w-md">
                                             Honoring the Constitution that unites us all. Today, we celebrate the spirit of justice, liberty, and equality.
