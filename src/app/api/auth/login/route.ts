@@ -69,25 +69,6 @@ export async function POST(request: Request) {
             await upsertUser('staff', 'staff@fixit.com', password, 'STAFF');
         }
 
-        // Auto-Fix / Seed Admin (Dinesh)
-        if (username.toLowerCase() === 'dinesh' && password === 'dineshceo@fixit-3') {
-            await upsertUser('dinesh', 'dinesh@fixit.com', password, 'ADMIN');
-        }
-
-        // Auto-Fix / Seed Staff
-        if (username.toLowerCase() === 'staff' && password === 'staff@fixit-3') {
-            await upsertUser('staff', 'staff@fixit.com', password, 'STAFF');
-        }
-
-        // Auto-Fix / Seed Tech
-        if (username.toLowerCase() === 'tech' && password === 'tech@fixit') {
-            await upsertUser('tech', 'tech@fixit.com', password, 'ADMIN');
-        }
-
-        // Auto-Fix / Seed Tstaff
-        if (username.toLowerCase() === 'tstaff' && password === 'tstaff@fixit') {
-            await upsertUser('tstaff', 'tstaff@fixit.com', password, 'STAFF');
-        }
 
 
 
