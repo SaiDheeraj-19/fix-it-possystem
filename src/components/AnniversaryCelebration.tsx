@@ -60,8 +60,8 @@ const useAnniversaryCheck = () => {
     const [isAnniversary, setIsAnniversary] = useState(false);
     useEffect(() => {
         const now = new Date();
-        const targetDate = { date: 27, month: 0, year: 2026 };
-        // Strict check: Only valid on 27th Jan 2026
+        const targetDate = { date: 28, month: 0, year: 2026 };
+        // Strict check: Only valid on 28th Jan 2026
         const isToday = now.getDate() === targetDate.date && now.getMonth() === targetDate.month && now.getFullYear() === targetDate.year;
         setIsAnniversary(isToday);
     }, []);
